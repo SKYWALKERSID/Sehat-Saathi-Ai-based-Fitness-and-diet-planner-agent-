@@ -1,0 +1,137 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sehat Saathi{% endblock %}</title>
+    <!-- Bootstrap 5 CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Font (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20260619-9">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="glass-bg-blur"></div>
+
+    {% block page_nav %}
+    <nav class="navbar navbar-expand-lg navbar-glass py-2">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('main.index') }}">
+                <img src="{{ url_for('static', filename='img/sehatlogo.png') }}?v=20260619-9" alt="Sehat Saathi logo" class="brand-mark brand-mark--wide">
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto align-items-center gap-3 mt-3 mt-lg-0">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link fw-semibold" href="{{ url_for('main.dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+                        </li>
+                        <li class="nav-item dropdown d-none" id="headerProfileSelectWrapper">
+                            <div class="d-flex align-items-center gap-2 bg-glass-compact px-3 py-1 rounded-pill border">
+                                <label for="headerProfileSelect" class="text-secondary small mb-0"><i class="fa-solid fa-user-circle"></i> Profile</label>
+                                <select id="headerProfileSelect" class="form-select-sm bg-transparent border-0 text-body-emphasis fw-semibold" style="outline: none; cursor: pointer;">
+                                    <option value="">-- Switch Profile --</option>
+                                </select>
+                            </div>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 fw-semibold" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-user-gear"></i> {{ current_user.email }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end bg-surface border border-neutral">
+                                <li><a class="dropdown-item" href="#" id="btnLogoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-outline-secondary rounded-pill px-4" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link fw-semibold" href="{{ url_for('auth.login') }}"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-outline-dark rounded-pill px-4" href="{{ url_for('auth.signup') }}"><i class="fa-solid fa-user-plus"></i> Sign Up</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endblock %}
+
+    <main class="flex-grow-1">
+        <div class="container py-3">
+            <div id="flashContainer">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show border border-neutral shadow-sm bg-surface" role="alert">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-solid {% if category == 'success' %}fa-circle-check text-success{% elif category == 'danger' or category == 'error' %}fa-circle-exclamation text-danger{% else %}fa-circle-info text-info{% endif %} fs-5"></i>
+                                    <span>{{ message }}</span>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+
+        {% if error_code %}
+            <div class="container py-5">
+                <div class="row justify-content-center align-items-center">
+                    <div class="col-md-6 text-center">
+                        <div class="card bg-surface p-5 border border-neutral shadow-sm rounded-4">
+                            <h1 class="display-1 fw-bold text-danger">{{ error_code }}</h1>
+                            <h3 class="mb-4">{{ error_message }}</h3>
+                            <a href="{{ url_for('main.index') }}" class="btn btn-dark px-4 rounded-pill"><i class="fa-solid fa-house"></i> Back to Home</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            {% block content %}{% endblock %}
+        {% endif %}
+    </main>
+
+    {% block page_footer %}
+    <footer class="text-center py-4 border-top border-neutral mt-5 bg-surface">
+        <div class="container">
+            <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-2 gap-md-3 mb-2">
+                <a href="{{ url_for('main.terms_and_conditions') }}" class="text-decoration-none text-secondary small">Terms and Conditions</a>
+                <span class="text-secondary small d-none d-md-inline">|</span>
+                <a href="{{ url_for('main.privacy_policy') }}" class="text-decoration-none text-secondary small">Privacy Policy</a>
+                <span class="text-secondary small d-none d-md-inline">|</span>
+                <a href="mailto:siddhesh.jabalpur49697@gmail.com" class="text-decoration-none text-secondary small">siddhesh.jabalpur49697@gmail.com</a>
+            </div>
+            <p class="text-secondary small mb-0">&copy; 2026 Sehat Saathi. AI Based Fitness & Diet Planner Agent.</p>
+        </div>
+    </footer>
+    {% endblock %}
+
+    <!-- Bootstrap 5 JS Bundle CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const logoutBtn = document.getElementById('btnLogoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = "{{ url_for('auth.logout') }}";
+            });
+        }
+    </script>
+</body>
+</html>
+

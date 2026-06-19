@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - Sehat Saathi{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-5">
+        <div class="card bg-dark-glass p-4 p-sm-5 border border-white-10 shadow-2xl rounded-4 relative">
+            <div class="text-center mb-4">
+                <i class="fa-solid fa-user-plus logo-icon mb-2 fs-2"></i>
+                <h2 class="fw-bold text-white mb-1">Create account</h2>
+                <p class="text-secondary text-sm">Set up personalized fitness and nutrition plans.</p>
+            </div>
+            
+            <form action="{{ url_for('auth.signup') }}" method="POST" novalidate>
+                <div class="mb-3">
+                    <label for="email" class="form-label text-secondary small fw-medium">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-glass-compact border border-white-10 text-secondary"><i class="fa-solid fa-envelope"></i></span>
+                        <input type="email" name="email" id="email" class="form-control bg-glass-compact text-white border border-white-10" placeholder="e.g. name@gmail.com" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label text-secondary small fw-medium">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-glass-compact border border-white-10 text-secondary"><i class="fa-solid fa-key"></i></span>
+                        <input type="password" name="password" id="password" class="form-control bg-glass-compact text-white border border-white-10" placeholder="Create strong password" required>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="confirm_password" class="form-label text-secondary small fw-medium">Confirm Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-glass-compact border border-white-10 text-secondary"><i class="fa-solid fa-circle-check"></i></span>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-control bg-glass-compact text-white border border-white-10" placeholder="Repeat password" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100 py-2.5 rounded-pill mb-3"><i class="fa-solid fa-bolt"></i> Register Now</button>
+            </form>
+            
+            <div class="text-center">
+                <p class="text-secondary small mb-0">Already have an account? <a href="{{ url_for('auth.login') }}" class="text-primary fw-semibold text-decoration-none">Log in here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

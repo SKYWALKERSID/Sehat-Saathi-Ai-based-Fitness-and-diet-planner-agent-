@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+
+# Pyre type checker
+.pyre/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.*
+
+# SQLite DBs and local db files
+*.db
+*.sqlite3
+
+# More explicit DB and sqlite patterns
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db-journal
+*.sqlite-journal
+app.db
+fitness_planner.db
+
+# Explicit DB files
+app.db
+fitness_planner.db
+
+# Logs
+logs/
+*.log
+
+# Node modules (if any frontend tooling added later)
+node_modules/
+
+# Ignore generated test summary (if produced locally)
+test_results_summary.md
+
+# Private test results file
+reports/test_results_private.md
+
+# Ignore compiled assets
+*.pyc
+
+# Misc
+instance/
+
+# Ignore all __pycache__ folders anywhere
+**/__pycache__/
+
+# Ignore Python cache files
+*.pyc
+
+__pycache__
+__pycache__/database.cpython-314.pyc
+__pycache__/recommender.cpython-314.pyc

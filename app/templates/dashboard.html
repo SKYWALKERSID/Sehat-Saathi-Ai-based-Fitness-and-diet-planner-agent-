@@ -1,0 +1,2592 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Sehat Saathi Dashboard{% endblock %}
+
+{% block page_nav %}{% endblock %}
+{% block page_footer %}{% endblock %}
+
+{% block extra_head %}
+<script defer src="{{ url_for('static', filename='js/dashboard.js') }}?v=20260619-9"></script>
+<style>
+    .dashboard-page {
+        min-height: 100vh;
+        background: var(--page-bg);
+        color: var(--page-text);
+    }
+
+    .ss-layout {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr) 300px;
+        gap: 1.25rem;
+        align-items: start;
+    }
+
+    .ss-rail,
+    .ss-main {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .ss-rail {
+        position: sticky;
+        top: 1.25rem;
+    }
+
+    .ss-card {
+        background: #fff;
+        border: 1px solid var(--page-border);
+        border-radius: 1.5rem;
+        box-shadow: var(--page-shadow-soft);
+    }
+
+    .ss-card-pad {
+        padding: 1.25rem;
+    }
+
+    .ss-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+    }
+
+    .ss-brand img {
+        width: 3.4rem;
+        height: 3.4rem;
+        object-fit: contain;
+        flex: 0 0 auto;
+    }
+
+    .ss-brand h1 {
+        font-size: 1.1rem;
+        margin-bottom: 0.1rem;
+        letter-spacing: -0.03em;
+    }
+
+    .ss-brand p {
+        margin-bottom: 0;
+        color: var(--page-muted);
+        font-size: 0.92rem;
+    }
+
+    .ss-rail-title {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--page-muted);
+        margin-bottom: 0.8rem;
+        font-weight: 700;
+    }
+
+    .ss-rail-list {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .ss-rail-chip {
+        border: 1px solid var(--page-border);
+        border-radius: 1rem;
+        padding: 0.9rem 1rem;
+        background: #fff;
+    }
+
+    .ss-rail-chip span {
+        display: block;
+        color: var(--page-muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-bottom: 0.25rem;
+    }
+
+    .ss-rail-chip strong {
+        display: block;
+        font-size: 1.05rem;
+    }
+
+    .ss-link-list a {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.85rem 1rem;
+        border: 1px solid var(--page-border);
+        border-radius: 1rem;
+        color: var(--page-text);
+        text-decoration: none;
+        background: #fff;
+    }
+
+    .ss-link-list a:hover {
+        background: var(--page-surface-soft);
+    }
+
+    .ss-main-shell {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .ss-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-radius: 1.5rem;
+    }
+
+    .ss-topbar-left,
+    .ss-topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        flex-wrap: wrap;
+    }
+
+    .ss-topbar-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        margin-bottom: 0.15rem;
+    }
+
+    .ss-topbar-copy {
+        color: var(--page-muted);
+        margin-bottom: 0;
+    }
+
+    .ss-search {
+        min-width: min(100%, 320px);
+        border: 1px solid var(--page-border);
+        border-radius: 999px;
+        background: #fff;
+        padding: 0.82rem 1rem;
+        color: var(--page-muted);
+    }
+
+    .ss-summary-table-wrap {
+        overflow: hidden;
+        border-radius: 1.25rem;
+        border: 1px solid var(--page-border);
+        background: #fff;
+        box-shadow: var(--page-shadow-soft);
+    }
+
+    .ss-summary-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .ss-summary-table th,
+    .ss-summary-table td {
+        padding: 1.25rem 1.2rem;
+        border-right: 1px solid var(--page-border);
+        vertical-align: top;
+    }
+
+    .ss-summary-table th:last-child,
+    .ss-summary-table td:last-child {
+        border-right: 0;
+    }
+
+    .ss-summary-table th {
+        width: 34%;
+        text-align: left;
+        background: var(--page-surface-soft);
+    }
+
+    .ss-summary-table .ss-profile-name {
+        font-size: clamp(2rem, 3vw, 3.2rem);
+        line-height: 1;
+        letter-spacing: -0.05em;
+        color: var(--ss-dark-green);
+        margin-bottom: 0.75rem;
+    }
+
+    .ss-summary-table .ss-profile-meta {
+        color: var(--page-muted);
+        font-size: 1rem;
+        line-height: 1.7;
+        margin-bottom: 0;
+    }
+
+    .ss-summary-table .ss-field-label {
+        display: block;
+        color: var(--page-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 0.72rem;
+        margin-bottom: 0.3rem;
+        font-weight: 700;
+    }
+
+    .ss-summary-table .ss-field-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: var(--page-text);
+    }
+
+    .ss-summary-table .ss-field-note {
+        color: var(--page-muted);
+        font-size: 0.92rem;
+        margin-top: 0.4rem;
+    }
+
+    .ss-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .ss-section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .ss-section-title h3,
+    .ss-section-title h4 {
+        font-size: 1.35rem;
+        letter-spacing: -0.03em;
+        margin-bottom: 0;
+    }
+
+    .ss-muted {
+        color: var(--page-muted);
+    }
+
+    .ss-bmi {
+        display: grid;
+        place-items: center;
+        min-height: 240px;
+        text-align: center;
+        border: 1px solid var(--page-border);
+        border-radius: 1.35rem;
+        background: #fff;
+    }
+
+    .ss-bmi .value {
+        font-size: clamp(3rem, 5vw, 4.8rem);
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        line-height: 1;
+    }
+
+    .ss-bmi .label {
+        color: var(--page-muted);
+        margin-bottom: 0.35rem;
+    }
+
+    .ss-bars {
+        display: grid;
+        gap: 0.9rem;
+    }
+
+    .ss-bar-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .ss-bar-track {
+        height: 10px;
+        border-radius: 999px;
+        background: #edf2f7;
+        overflow: hidden;
+    }
+
+    .ss-bar-fill {
+        height: 100%;
+        border-radius: inherit;
+    }
+
+    .ss-bar-fill.carbs { background: var(--ss-green); }
+    .ss-bar-fill.protein { background: #f59e0b; }
+    .ss-bar-fill.fat { background: #94a3b8; }
+
+    .ss-macro-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .ss-macro {
+        text-align: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--page-border);
+    }
+
+    .ss-macro small {
+        display: block;
+        color: var(--page-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .ss-macro strong {
+        font-size: 1.05rem;
+    }
+
+    .ss-tabs-wrap {
+        overflow: hidden;
+        border-radius: 1.5rem;
+    }
+
+    .ss-tabs {
+        background: #fff;
+        border-bottom: 1px solid var(--page-border);
+    }
+
+    .ss-tabs .nav-link {
+        border: 0;
+        color: var(--page-muted);
+        padding: 1rem 1.15rem;
+        font-weight: 600;
+        border-radius: 0;
+    }
+
+    .ss-tabs .nav-link.active {
+        color: var(--page-text) !important;
+        background: var(--page-surface-soft) !important;
+    }
+
+    .ss-tab-content {
+        background: #fff;
+        padding: 1.15rem;
+    }
+
+    .ss-menu-list {
+        display: grid;
+        gap: 0.85rem;
+    }
+
+    .ss-meal-panel {
+        margin-bottom: 1rem;
+    }
+
+    .ss-meal-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .ss-meal-card {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.25rem;
+        border-radius: 1.25rem;
+        border: 1px solid var(--page-border);
+        background: #fff;
+        box-shadow: var(--page-shadow-soft);
+        transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    }
+
+    .ss-meal-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+        border-color: rgba(15, 23, 42, 0.16);
+    }
+
+    .ss-meal-card[data-meal="Breakfast"] { --meal-accent: #F59E0B; }
+    .ss-meal-card[data-meal="Lunch"] { --meal-accent: #22C55E; }
+    .ss-meal-card[data-meal="Evening Snack"] { --meal-accent: #3B82F6; }
+    .ss-meal-card[data-meal="Snack"] { --meal-accent: #3B82F6; }
+    .ss-meal-card[data-meal="Dinner"] { --meal-accent: #8B5CF6; }
+
+    .ss-meal-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .ss-meal-title {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: 0.25rem;
+    }
+
+    .ss-meal-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        background: #f8fafc;
+        color: var(--meal-accent);
+        font-size: 1.1rem;
+        flex: 0 0 auto;
+    }
+
+    .ss-meal-card[data-meal="Breakfast"] .ss-meal-icon { background: rgba(245, 158, 11, 0.12); }
+    .ss-meal-card[data-meal="Lunch"] .ss-meal-icon { background: rgba(34, 197, 94, 0.12); }
+    .ss-meal-card[data-meal="Evening Snack"] .ss-meal-icon { background: rgba(59, 130, 246, 0.12); }
+    .ss-meal-card[data-meal="Snack"] .ss-meal-icon { background: rgba(59, 130, 246, 0.12); }
+    .ss-meal-card[data-meal="Dinner"] .ss-meal-icon { background: rgba(139, 92, 246, 0.12); }
+
+    .ss-meal-time {
+        color: var(--page-muted);
+        font-size: 0.92rem;
+    }
+
+    .ss-meal-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .ss-meal-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.45rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        background: #fff;
+        color: var(--page-text);
+        white-space: nowrap;
+    }
+
+    .ss-meal-badge.calories {
+        border-color: color-mix(in srgb, var(--meal-accent) 22%, white);
+        color: var(--meal-accent);
+    }
+
+    .ss-meal-badge.protein {
+        border-color: rgba(34, 197, 94, 0.18);
+        color: var(--ss-dark-green);
+    }
+
+    .ss-score-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.8rem 0.9rem;
+        border-radius: 1rem;
+        background: #f8fafc;
+        border: 1px solid var(--page-border);
+    }
+
+    .ss-score-label {
+        color: var(--page-muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-weight: 700;
+        margin-bottom: 0.1rem;
+    }
+
+    .ss-score-value {
+        font-weight: 800;
+        font-size: 1.05rem;
+        letter-spacing: -0.03em;
+    }
+
+    .ss-score-pill {
+        padding: 0.32rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(34, 197, 94, 0.12);
+        color: var(--ss-dark-green);
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .ss-food-list {
+        display: grid;
+        gap: 0.7rem;
+    }
+
+    .ss-food-item {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0.75rem;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 1rem;
+        background: var(--page-surface-soft);
+        border: 1px solid transparent;
+    }
+
+    .ss-food-avatar {
+        width: 2.6rem;
+        height: 2.6rem;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #fff;
+        border: 1px solid var(--page-border);
+        font-size: 1rem;
+        flex: 0 0 auto;
+    }
+
+    .ss-food-name {
+        font-weight: 700;
+        color: var(--page-text);
+        margin-bottom: 0.15rem;
+        line-height: 1.25;
+    }
+
+    .ss-food-serving {
+        color: var(--page-muted);
+        font-size: 0.88rem;
+    }
+
+    .ss-macro-section {
+        padding-top: 0.25rem;
+        border-top: 1px solid var(--page-border);
+        display: grid;
+        gap: 0.8rem;
+    }
+
+    .ss-macro-row {
+        display: grid;
+        gap: 0.35rem;
+    }
+
+    .ss-macro-row-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        align-items: center;
+        color: var(--page-muted);
+        font-size: 0.86rem;
+    }
+
+    .ss-macro-track {
+        height: 8px;
+        border-radius: 999px;
+        background: #edf2f7;
+        overflow: hidden;
+    }
+
+    .ss-macro-fill {
+        height: 100%;
+        border-radius: inherit;
+        transition: width 500ms ease;
+    }
+
+    .ss-macro-fill.protein { background: #22c55e; }
+    .ss-macro-fill.carbs { background: #f59e0b; }
+    .ss-macro-fill.fat { background: #8b5cf6; }
+
+    .ss-meal-insight {
+        padding: 0.9rem;
+        border-radius: 1rem;
+        background: rgba(34, 197, 94, 0.08);
+        border: 1px solid rgba(34, 197, 94, 0.14);
+        color: var(--page-text);
+        font-size: 0.92rem;
+        line-height: 1.6;
+    }
+
+    .ss-meal-details {
+        border-top: 1px solid var(--page-border);
+        padding-top: 0.25rem;
+    }
+
+    .ss-meal-details summary {
+        list-style: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        color: var(--page-text);
+        padding: 0.2rem 0;
+    }
+
+    .ss-meal-details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .ss-details-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.5rem;
+        margin-top: 0.85rem;
+    }
+
+    .ss-detail-chip {
+        padding: 0.7rem 0.75rem;
+        border-radius: 0.9rem;
+        border: 1px solid var(--page-border);
+        background: #fff;
+        text-align: center;
+    }
+
+    .ss-detail-chip span {
+        display: block;
+        color: var(--page-muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-bottom: 0.2rem;
+    }
+
+    .ss-detail-chip strong {
+        font-size: 1rem;
+    }
+
+    .ss-substitutions {
+        margin-top: 0.85rem;
+        padding: 0.9rem;
+        border-radius: 1rem;
+        background: var(--page-surface-soft);
+        border: 1px solid var(--page-border);
+    }
+
+    .ss-substitutions h6 {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--page-muted);
+        margin-bottom: 0.6rem;
+    }
+
+    .ss-substitutions ul {
+        margin: 0;
+        padding-left: 1.1rem;
+        color: var(--page-text);
+    }
+
+    .ss-substitutions li {
+        margin-bottom: 0.35rem;
+    }
+
+    .ss-menu-card,
+    .ss-exercise-card,
+    .ss-timeline-card {
+        border: 1px solid var(--page-border);
+        border-radius: 1.1rem;
+        background: #fff;
+        padding: 1rem;
+    }
+
+    .ss-menu-card strong,
+    .ss-exercise-card strong {
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .ss-exercise-days {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+    }
+
+    .ss-exercise-days .btn {
+        border: 1px solid var(--page-border);
+        border-radius: 999px;
+        background: #fff;
+        color: var(--page-text);
+        white-space: nowrap;
+        flex: 0 0 auto;
+        padding: 0.7rem 1rem;
+        transition: transform 180ms ease, background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+    }
+
+    .ss-exercise-days .btn.active {
+        background: var(--ss-green);
+        color: #fff;
+        border-color: var(--ss-green);
+        box-shadow: 0 10px 18px rgba(34, 197, 94, 0.16);
+    }
+
+    .ss-workout-panel {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .ss-workout-header-copy {
+        max-width: 46rem;
+        color: var(--page-muted);
+    }
+
+    .ss-workout-overview {
+        display: grid;
+        grid-template-columns: minmax(0, 1.7fr) minmax(0, 0.9fr);
+        gap: 1rem;
+        padding: 1.25rem;
+        border-radius: 1.25rem;
+        border: 1px solid var(--page-border);
+        background: #fff;
+        box-shadow: var(--page-shadow-soft);
+    }
+
+    .ss-workout-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        margin-bottom: 0.35rem;
+    }
+
+    .ss-workout-meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .ss-workout-meta-card {
+        padding: 0.9rem 1rem;
+        border-radius: 1rem;
+        background: var(--page-surface-soft);
+        border: 1px solid var(--page-border);
+    }
+
+    .ss-workout-meta-card span {
+        display: block;
+        color: var(--page-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.72rem;
+        margin-bottom: 0.25rem;
+        font-weight: 700;
+    }
+
+    .ss-workout-meta-card strong {
+        font-size: 1rem;
+    }
+
+    .ss-progress-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .ss-progress-text {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--page-text);
+        font-weight: 600;
+    }
+
+    .ss-progress-bar {
+        height: 10px;
+        border-radius: 999px;
+        background: #edf2f7;
+        overflow: hidden;
+    }
+
+    .ss-progress-bar span {
+        display: block;
+        height: 100%;
+        width: 0%;
+        border-radius: inherit;
+        background: var(--ss-green);
+        transition: width 520ms ease;
+    }
+
+    .ss-streak-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .ss-mini-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.45rem 0.75rem;
+        border-radius: 999px;
+        background: rgba(34, 197, 94, 0.12);
+        color: var(--ss-dark-green);
+        border: 1px solid rgba(34, 197, 94, 0.16);
+        font-size: 0.84rem;
+        font-weight: 700;
+    }
+
+    .ss-exercise-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .ss-exercise-card {
+        padding: 1.1rem;
+        border-radius: 1.25rem;
+        border: 1px solid var(--page-border);
+        background: #fff;
+        box-shadow: var(--page-shadow-soft);
+        transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    }
+
+    .ss-exercise-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+        border-color: rgba(15, 23, 42, 0.16);
+    }
+
+    .ss-exercise-card-head {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 0.9rem;
+        align-items: start;
+    }
+
+    .ss-exercise-thumb {
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 1rem;
+        display: grid;
+        place-items: center;
+        background: var(--page-surface-soft);
+        border: 1px solid var(--page-border);
+        font-size: 1.4rem;
+        flex: 0 0 auto;
+    }
+
+    .ss-exercise-name {
+        font-size: 1.1rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: 0.25rem;
+    }
+
+    .ss-exercise-subtitle {
+        color: var(--page-muted);
+        font-size: 0.92rem;
+    }
+
+    .ss-difficulty-badge {
+        padding: 0.4rem 0.7rem;
+        border-radius: 999px;
+        background: var(--page-surface-soft);
+        color: var(--page-text);
+        font-size: 0.78rem;
+        font-weight: 700;
+        border: 1px solid var(--page-border);
+        white-space: nowrap;
+    }
+
+    .ss-difficulty-badge.beginner { background: rgba(34, 197, 94, 0.12); color: var(--ss-dark-green); border-color: rgba(34, 197, 94, 0.16); }
+    .ss-difficulty-badge.intermediate { background: rgba(245, 158, 11, 0.12); color: #b45309; border-color: rgba(245, 158, 11, 0.2); }
+    .ss-difficulty-badge.advanced { background: rgba(139, 92, 246, 0.12); color: #6d28d9; border-color: rgba(139, 92, 246, 0.2); }
+
+    .ss-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .ss-exercise-chip {
+        padding: 0.45rem 0.7rem;
+        border-radius: 999px;
+        border: 1px solid var(--page-border);
+        background: var(--page-surface-soft);
+        color: var(--page-text);
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .ss-exercise-details {
+        margin-top: 1rem;
+        border-top: 1px solid var(--page-border);
+        padding-top: 0.9rem;
+    }
+
+    .ss-exercise-details summary {
+        cursor: pointer;
+        list-style: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        color: var(--page-text);
+    }
+
+    .ss-exercise-details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .ss-exercise-details-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .ss-exercise-detail-block {
+        padding: 0.85rem;
+        border-radius: 1rem;
+        background: #fff;
+        border: 1px solid var(--page-border);
+    }
+
+    .ss-exercise-detail-block span {
+        display: block;
+        color: var(--page-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.72rem;
+        margin-bottom: 0.25rem;
+        font-weight: 700;
+    }
+
+    .ss-exercise-detail-block strong {
+        color: var(--page-text);
+    }
+
+    .ss-exercise-tip {
+        margin-top: 0.9rem;
+        padding: 0.95rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(34, 197, 94, 0.16);
+        background: rgba(34, 197, 94, 0.08);
+        color: var(--page-text);
+        line-height: 1.6;
+    }
+
+    .ss-workout-summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) 180px;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .ss-summary-metrics {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .ss-summary-metric {
+        padding: 0.9rem;
+        border-radius: 1rem;
+        border: 1px solid var(--page-border);
+        background: #fff;
+    }
+
+    .ss-summary-metric span {
+        display: block;
+        color: var(--page-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.72rem;
+        margin-bottom: 0.25rem;
+        font-weight: 700;
+    }
+
+    .ss-summary-metric strong {
+        font-size: 1.05rem;
+        letter-spacing: -0.03em;
+    }
+
+    .ss-ring-sm {
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        border: 12px solid #d1fae5;
+        background: radial-gradient(circle at center, #fff 0 64%, transparent 65% 100%);
+        display: grid;
+        place-items: center;
+        margin-left: auto;
+        position: relative;
+    }
+
+    .ss-ring-sm::before {
+        content: "";
+        position: absolute;
+        inset: 10px;
+        border-radius: 50%;
+        border: 12px solid var(--ss-green);
+        border-right-color: #d1fae5;
+        border-bottom-color: #d1fae5;
+        transform: rotate(18deg);
+    }
+
+    .ss-ring-sm span {
+        position: relative;
+        z-index: 1;
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+    }
+
+    .ss-achievement-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .ss-progress-dashboard {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .ss-progress-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .ss-kpi-card {
+        display: grid;
+        gap: 0.85rem;
+        padding: 1rem;
+        border-radius: 1.25rem;
+        border: 1px solid var(--page-border);
+        background: #fff;
+        box-shadow: var(--page-shadow-soft);
+    }
+
+    .ss-kpi-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
+    .ss-kpi-icon {
+        width: 2.8rem;
+        height: 2.8rem;
+        border-radius: 1rem;
+        display: grid;
+        place-items: center;
+        background: var(--page-surface-soft);
+        border: 1px solid var(--page-border);
+        color: var(--ss-dark-green);
+        font-size: 1.15rem;
+        flex: 0 0 auto;
+    }
+
+    .ss-kpi-label {
+        color: var(--page-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+    }
+
+    .ss-kpi-value {
+        font-size: 1.8rem;
+        line-height: 1;
+        letter-spacing: -0.05em;
+        font-weight: 800;
+        margin-bottom: 0.2rem;
+    }
+
+    .ss-kpi-trend {
+        font-size: 0.88rem;
+        color: var(--page-muted);
+        margin-bottom: 0;
+    }
+
+    .ss-kpi-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        border: 1px solid var(--page-border);
+        background: var(--page-surface-soft);
+        font-size: 0.76rem;
+        font-weight: 700;
+        color: var(--page-text);
+        white-space: nowrap;
+    }
+
+    .ss-kpi-badge.success {
+        background: rgba(22, 163, 74, 0.1);
+        color: var(--ss-dark-green);
+        border-color: rgba(22, 163, 74, 0.18);
+    }
+
+    .ss-kpi-badge.warning {
+        background: rgba(245, 158, 11, 0.12);
+        color: #b45309;
+        border-color: rgba(245, 158, 11, 0.2);
+    }
+
+    .ss-kpi-badge.danger {
+        background: rgba(239, 68, 68, 0.12);
+        color: #b91c1c;
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .ss-sparkline {
+        width: 100%;
+        height: 44px;
+        display: block;
+    }
+
+    .ss-progress-grid {
+        display: grid;
+        grid-template-columns: 360px minmax(0, 1fr);
+        gap: 1rem;
+        align-items: start;
+    }
+
+    .ss-progress-column {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .ss-panel {
+        border: 1px solid var(--page-border);
+        border-radius: 1.5rem;
+        background: #fff;
+        box-shadow: var(--page-shadow-soft);
+    }
+
+    .ss-panel-pad {
+        padding: 1.2rem;
+    }
+
+    .ss-panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .ss-panel-head h4 {
+        margin-bottom: 0.25rem;
+        letter-spacing: -0.04em;
+    }
+
+    .ss-panel-copy {
+        color: var(--page-muted);
+        margin-bottom: 0;
+    }
+
+    .ss-toggle-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem;
+        border-radius: 999px;
+        border: 1px solid var(--page-border);
+        background: var(--page-surface-soft);
+        flex-wrap: wrap;
+    }
+
+    .ss-toggle-group .btn {
+        border: 0;
+        border-radius: 999px;
+        padding: 0.55rem 0.85rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--page-muted);
+        background: transparent;
+    }
+
+    .ss-toggle-group .btn.active {
+        background: var(--ss-green);
+        color: #fff;
+        box-shadow: 0 8px 16px rgba(34, 197, 94, 0.18);
+    }
+
+    .ss-chart-frame {
+        padding: 1rem;
+        border-radius: 1.25rem;
+        border: 1px solid var(--page-border);
+        background: var(--page-surface-soft);
+        min-height: 360px;
+    }
+
+    .ss-chart-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .ss-chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+    }
+
+    .ss-legend-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.45rem 0.75rem;
+        border-radius: 999px;
+        border: 1px solid var(--page-border);
+        background: #fff;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--page-text);
+    }
+
+    .ss-legend-dot {
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .ss-milestone-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .ss-milestone-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.45rem 0.75rem;
+        border-radius: 999px;
+        border: 1px solid var(--page-border);
+        background: #fff;
+        color: var(--page-text);
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .ss-progress-analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .ss-analytics-card {
+        border: 1px solid var(--page-border);
+        border-radius: 1.5rem;
+        background: #fff;
+        box-shadow: var(--page-shadow-soft);
+        padding: 1.2rem;
+    }
+
+    .ss-analytics-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .ss-stat-tile {
+        border: 1px solid var(--page-border);
+        border-radius: 1rem;
+        background: var(--page-surface-soft);
+        padding: 0.85rem;
+    }
+
+    .ss-stat-tile span {
+        display: block;
+        color: var(--page-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .ss-stat-tile strong {
+        display: block;
+        font-size: 1rem;
+        letter-spacing: -0.03em;
+    }
+
+    .ss-radial-widget {
+        display: grid;
+        place-items: center;
+        min-height: 220px;
+        position: relative;
+    }
+
+    .ss-radial-chart {
+        width: 210px;
+        height: 210px;
+    }
+
+    .ss-radial-chart circle {
+        fill: none;
+        stroke-width: 12;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+
+    .ss-radial-track {
+        stroke: #e5e7eb;
+    }
+
+    .ss-radial-progress {
+        stroke: var(--ss-green);
+        stroke-linecap: round;
+        stroke-dasharray: 565;
+        stroke-dashoffset: 565;
+        transition: stroke-dashoffset 600ms ease;
+    }
+
+    .ss-radial-label {
+        position: absolute;
+        text-align: center;
+    }
+
+    .ss-radial-label strong {
+        display: block;
+        font-size: 2rem;
+        line-height: 1;
+        letter-spacing: -0.05em;
+    }
+
+    .ss-radial-label span {
+        display: block;
+        color: var(--page-muted);
+        font-size: 0.82rem;
+        margin-top: 0.25rem;
+        font-weight: 700;
+    }
+
+    .ss-insight-card {
+        border-radius: 1.15rem;
+        padding: 1rem;
+        border: 1px solid var(--page-border);
+        background: var(--page-surface-soft);
+    }
+
+    .ss-insight-card + .ss-insight-card {
+        margin-top: 0.75rem;
+    }
+
+    .ss-insight-card.success {
+        background: rgba(22, 163, 74, 0.08);
+        border-color: rgba(22, 163, 74, 0.16);
+    }
+
+    .ss-insight-card.warning {
+        background: rgba(245, 158, 11, 0.1);
+        border-color: rgba(245, 158, 11, 0.18);
+    }
+
+    .ss-insight-card.info {
+        background: rgba(59, 130, 246, 0.08);
+        border-color: rgba(59, 130, 246, 0.16);
+    }
+
+    .ss-goal-list,
+    .ss-score-breakdown,
+    .ss-timeline-list {
+        display: grid;
+        gap: 0.85rem;
+    }
+
+    .ss-goal-item,
+    .ss-score-row,
+    .ss-timeline-item {
+        border: 1px solid var(--page-border);
+        border-radius: 1rem;
+        background: #fff;
+        padding: 0.9rem 1rem;
+    }
+
+    .ss-goal-item strong,
+    .ss-score-row strong {
+        display: block;
+        margin-top: 0.2rem;
+    }
+
+    .ss-progress-track {
+        height: 0.6rem;
+        border-radius: 999px;
+        background: #edf2f7;
+        overflow: hidden;
+        margin-top: 0.7rem;
+    }
+
+    .ss-progress-fill {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--ss-green);
+        transition: width 520ms ease;
+    }
+
+    .ss-score-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.8rem;
+        margin-top: 1rem;
+    }
+
+    .ss-score-row {
+        padding: 0.8rem;
+    }
+
+    .ss-timeline-item time {
+        display: block;
+        color: var(--page-muted);
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+    }
+
+    .ss-timeline-item ul {
+        margin: 0.4rem 0 0;
+        padding-left: 1.1rem;
+        color: var(--page-text);
+    }
+
+    .ss-timeline-item li + li {
+        margin-top: 0.25rem;
+    }
+
+    .ss-floating-field {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0.75rem;
+        align-items: start;
+    }
+
+    .ss-field-icon {
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 1rem;
+        display: grid;
+        place-items: center;
+        background: var(--page-surface-soft);
+        border: 1px solid var(--page-border);
+        color: var(--ss-dark-green);
+        flex: 0 0 auto;
+    }
+
+    .ss-progress-form .form-floating > .form-control,
+    .ss-progress-form .form-floating > .form-select {
+        border-radius: 1rem;
+        border-color: var(--page-border);
+        background: #fff;
+    }
+
+    .ss-progress-form .form-floating > label {
+        color: var(--page-muted);
+    }
+
+    .ss-chart-canvas-wrap {
+        min-height: 340px;
+        position: relative;
+    }
+
+    @media (max-width: 1199.98px) {
+        .ss-workout-overview,
+        .ss-workout-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-ring-sm {
+            margin-left: 0;
+        }
+
+        .ss-summary-metrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .ss-progress-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-progress-kpis {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .ss-progress-analytics-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 991.98px) {
+        .ss-exercise-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-progress-kpis {
+            display: flex;
+            overflow-x: auto;
+            padding-bottom: 0.35rem;
+            scroll-snap-type: x mandatory;
+        }
+
+        .ss-kpi-card {
+            min-width: 240px;
+            flex: 0 0 240px;
+            scroll-snap-align: start;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .ss-exercise-card-head {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-exercise-details-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-summary-metrics {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-analytics-stat-grid,
+        .ss-score-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-floating-field {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .ss-right-stack {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .ss-calendar-head,
+    .ss-activity-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
+    .ss-calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .ss-calendar-cell {
+        min-height: 2.5rem;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--page-border);
+        border-radius: 0.85rem;
+        background: #fff;
+        color: var(--page-muted);
+    }
+
+    .ss-calendar-cell.active {
+        background: rgba(34, 197, 94, 0.12);
+        color: var(--ss-dark-green);
+        font-weight: 700;
+    }
+
+    .ss-activity-item {
+        padding: 0.85rem 0;
+        border-bottom: 1px solid var(--page-border);
+    }
+
+    .ss-activity-item:last-child {
+        border-bottom: 0;
+    }
+
+    .ss-dot {
+        width: 0.7rem;
+        height: 0.7rem;
+        border-radius: 50%;
+        background: var(--ss-green);
+        flex: 0 0 auto;
+    }
+
+    .ss-dot.yellow { background: #f59e0b; }
+    .ss-dot.orange { background: #fb923c; }
+
+    .ss-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background: var(--page-surface-soft);
+        color: var(--page-text);
+        font-size: 0.85rem;
+    }
+
+    .ss-shell {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .ss-dashboard-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .ss-dashboard-head .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+    }
+
+    .ss-dashboard-head .brand img {
+        width: 3rem;
+        height: 3rem;
+        object-fit: contain;
+    }
+
+    .ss-dashboard-head .brand strong {
+        display: block;
+        font-size: 1rem;
+        letter-spacing: -0.02em;
+    }
+
+    .ss-dashboard-head .brand span {
+        color: var(--page-muted);
+        font-size: 0.92rem;
+    }
+
+    .ss-right-stack .card {
+        border-radius: 1.25rem;
+    }
+
+    .ss-confidence {
+        display: grid;
+        grid-template-columns: 180px minmax(0, 1fr);
+        gap: 1.25rem;
+        align-items: center;
+    }
+
+    .ss-ring {
+        width: 180px;
+        height: 180px;
+        margin: 0 auto;
+        position: relative;
+        border-radius: 50%;
+        border: 12px solid #0f172a;
+        display: grid;
+        place-items: center;
+    }
+
+    .ss-ring span {
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+    }
+
+    .ss-notes {
+        border: 1px solid var(--page-border);
+        border-radius: 1.1rem;
+        padding: 1rem;
+        background: #fff;
+    }
+
+    .ss-toast .toast-body {
+        font-weight: 600;
+    }
+
+    @media (max-width: 1399.98px) {
+        .ss-layout {
+            grid-template-columns: 240px minmax(0, 1fr) 280px;
+        }
+    }
+
+    @media (max-width: 1199.98px) {
+        .ss-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-rail {
+            position: static;
+        }
+    }
+
+    @media (max-width: 991.98px) {
+        .ss-grid-2,
+        .ss-confidence {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-meal-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .ss-topbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .ss-summary-table,
+        .ss-summary-table tbody,
+        .ss-summary-table tr,
+        .ss-summary-table th,
+        .ss-summary-table td {
+            display: block;
+            width: 100%;
+        }
+
+        .ss-summary-table th,
+        .ss-summary-table td {
+            border-right: 0;
+            border-bottom: 1px solid var(--page-border);
+        }
+
+        .ss-summary-table tr:last-child th,
+        .ss-summary-table tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .ss-tabs .nav-link {
+            padding-inline: 0.8rem;
+            font-size: 0.92rem;
+        }
+
+        .ss-meal-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-details-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <section id="setupSection">
+        <div class="container py-4 py-lg-5">
+            <div class="ss-card ss-card-pad">
+                <div class="ss-section-title">
+                    <div>
+                        <p class="ss-rail-title mb-2">Sehat Saathi</p>
+                        <h3 class="mb-1">Create your fitness profile</h3>
+                        <p class="ss-muted mb-0">Enter your biometrics, goal, activity level, preferences, and constraints. The agent will calculate targets and generate a personalized plan.</p>
+                    </div>
+                    <span class="ss-pill"><i class="fa-solid fa-lock"></i> Private setup</span>
+                </div>
+
+                <form id="setupForm" class="mt-4">
+                    <div class="form-step active" data-step="1">
+                        <div class="ss-rail-title">Step 1 of 3</div>
+                        <h4 class="mb-3">Physiological details</h4>
+                        <div class="row g-3">
+                            <div class="col-lg-6">
+                                <label for="name" class="form-label fw-semibold">Profile Name *</label>
+                                <input type="text" id="name" class="form-control" required placeholder="Enter your name">
+                            </div>
+                            <div class="col-lg-6">
+                                <label for="age" class="form-label fw-semibold">Age (years) *</label>
+                                <input type="number" id="age" class="form-control" min="10" max="100" required placeholder="20">
+                            </div>
+                            <div class="col-lg-4">
+                                <label for="gender" class="form-label fw-semibold">Gender *</label>
+                                <select id="gender" class="form-select" required>
+                                    <option value="">Select</option>
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-4">
+                                <label for="height" class="form-label fw-semibold">Height (cm) *</label>
+                                <input type="number" id="height" class="form-control" min="80" max="250" required placeholder="165">
+                            </div>
+                            <div class="col-lg-4">
+                                <label for="weight" class="form-label fw-semibold">Weight (kg) *</label>
+                                <input type="number" id="weight" class="form-control" min="20" max="300" required placeholder="65">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-step" data-step="2">
+                        <div class="ss-rail-title">Step 2 of 3</div>
+                        <h4 class="mb-3">Goals and lifestyle</h4>
+                        <div class="row g-3">
+                            <div class="col-lg-6">
+                                <label for="fitness_goal" class="form-label fw-semibold">Fitness Goal *</label>
+                                <select id="fitness_goal" class="form-select" required>
+                                    <option value="">Select goal</option>
+                                    <option>Fat Loss</option>
+                                    <option>Muscle Gain</option>
+                                    <option>General Fitness</option>
+                                    <option>Endurance</option>
+                                    <option>Maintenance</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-6">
+                                <label for="activity_level" class="form-label fw-semibold">Activity Level *</label>
+                                <select id="activity_level" class="form-select" required>
+                                    <option value="">Select activity level</option>
+                                    <option>Sedentary</option>
+                                    <option>Lightly Active</option>
+                                    <option>Moderately Active</option>
+                                    <option>Very Active</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-6">
+                                <label for="workout_experience" class="form-label fw-semibold">Experience *</label>
+                                <select id="workout_experience" class="form-select" required>
+                                    <option value="">Select level</option>
+                                    <option>Beginner</option>
+                                    <option>Intermediate</option>
+                                    <option>Advanced</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3">
+                                <label for="water_intake" class="form-label fw-semibold">Water Intake Goal (Liters) *</label>
+                                <input type="number" id="water_intake" class="form-control" min="1" max="10" step="0.5" required placeholder="3">
+                            </div>
+                            <div class="col-lg-3">
+                                <label for="sleep_hours" class="form-label fw-semibold">Sleep (Hours/Night) *</label>
+                                <input type="number" id="sleep_hours" class="form-control" min="3" max="12" step="0.5" required placeholder="8">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-step" data-step="3">
+                        <div class="ss-rail-title">Step 3 of 3</div>
+                        <h4 class="mb-3">Constraints and preferences</h4>
+                        <div class="row g-3">
+                            <div class="col-lg-12">
+                                <label for="diet_preference" class="form-label fw-semibold">Diet Preference *</label>
+                                <select id="diet_preference" class="form-select" required>
+                                    <option value="">Select diet</option>
+                                    <option>Vegetarian</option>
+                                    <option>Non-Vegetarian</option>
+                                    <option>Vegan</option>
+                                    <option>Eggetarian</option>
+                                    <option>Jain</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-4">
+                                <label for="medical_conditions" class="form-label fw-semibold">Medical Conditions</label>
+                                <textarea id="medical_conditions" class="form-control" rows="4" placeholder="Comma-separated conditions, or none"></textarea>
+                            </div>
+                            <div class="col-lg-4">
+                                <label for="injuries" class="form-label fw-semibold">Injuries</label>
+                                <textarea id="injuries" class="form-control" rows="4" placeholder="Comma-separated injuries, or none"></textarea>
+                            </div>
+                            <div class="col-lg-4">
+                                <label for="allergies" class="form-label fw-semibold">Allergies</label>
+                                <textarea id="allergies" class="form-control" rows="4" placeholder="Comma-separated allergies, or none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <button type="button" id="btnPrevStep" class="btn saathi-btn saathi-btn-ghost" disabled>Back</button>
+                        <button type="button" id="btnNextStep" class="btn saathi-btn saathi-btn-primary">Next</button>
+                        <button type="submit" id="btnSubmitForm" class="btn saathi-btn saathi-btn-primary hidden">Generate plan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section id="dashboardSection" class="hidden">
+        <div class="container-fluid px-3 px-lg-4 py-3 py-lg-4">
+            <div class="ss-layout">
+                <aside class="ss-rail">
+                    <div class="ss-card ss-card-pad">
+                        <div class="ss-brand">
+                            <img src="{{ url_for('static', filename='img/sehatlogo.png') }}?v=20260619-9" alt="Sehat Saathi logo">
+                            <div>
+                                <h1 class="mb-0">Sehat Saathi</h1>
+                                <p>AI Based Fitness &amp; Diet Planner</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ss-card ss-card-pad">
+                        <div class="ss-section-title">
+                            <h4>Active profile</h4>
+                            <button id="btnNewProfile" type="button" class="btn saathi-btn saathi-btn-ghost btn-sm">New</button>
+                        </div>
+                        <div class="ss-rail-list">
+                            <div class="ss-rail-chip">
+                                <span>Profile</span>
+                                <strong id="sidebarProfileName">Select a profile</strong>
+                            </div>
+                            <div class="ss-rail-chip">
+                                <span>Goal</span>
+                                <strong id="sidebarGoal">General Fitness</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ss-card ss-card-pad">
+                        <div class="ss-rail-title">Quick links</div>
+                        <div class="ss-link-list">
+                            <a href="{{ url_for('main.privacy_policy') }}"><i class="fa-solid fa-shield-halved"></i> Privacy Policy</a>
+                            <a href="{{ url_for('main.terms_and_conditions') }}"><i class="fa-solid fa-file-contract"></i> Terms</a>
+                            <a href="mailto:siddhesh.jabalpur49697@gmail.com"><i class="fa-solid fa-envelope"></i> Contact</a>
+                        </div>
+                    </div>
+                </aside>
+
+                <main class="ss-main">
+                    <section class="ss-card ss-card-pad ss-topbar">
+                        <div class="ss-topbar-left">
+                            <div>
+                                <div class="ss-topbar-title">Dashboard</div>
+                                <p class="ss-topbar-copy">Your plans, progress and feedback in one place.</p>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 ms-lg-3 d-none" id="headerProfileSelectWrapper">
+                                <label for="headerProfileSelect" class="ss-pill mb-0"><i class="fa-solid fa-user"></i> Profile</label>
+                                <select id="headerProfileSelect" class="form-select" style="min-width: 220px;">
+                                    <option value="">-- Switch Profile --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="ss-topbar-right">
+                            <input type="search" class="ss-search" placeholder="Search anything" aria-label="Search dashboard">
+                            <a href="{{ url_for('auth.logout') }}" class="btn saathi-btn saathi-btn-ghost">Logout</a>
+                        </div>
+                    </section>
+
+                    <section class="ss-summary-table-wrap">
+                        <table class="ss-summary-table">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">
+                                        <div class="ss-profile-name" id="dispUserName">Your health workspace</div>
+                                        <p class="ss-profile-meta mb-0" id="dispUserGoal"><i class="fa-solid fa-crosshairs"></i> Goal: General Fitness | Experience: Beginner</p>
+                                    </th>
+                                    <td>
+                                        <span class="ss-field-label">Age</span>
+                                        <div class="ss-field-value" id="dispUserAge">--</div>
+                                    </td>
+                                    <td>
+                                        <span class="ss-field-label">Weight</span>
+                                        <div class="ss-field-value" id="dispUserWeight">--</div>
+                                    </td>
+                                    <td>
+                                        <span class="ss-field-label">Height</span>
+                                        <div class="ss-field-value" id="dispUserHeight">--</div>
+                                    </td>
+                                    <td>
+                                        <span class="ss-field-label">Diet</span>
+                                        <div class="ss-field-value" id="dispUserDiet">--</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section class="ss-grid-2">
+                        <div class="ss-card ss-card-pad">
+                            <div class="ss-section-title">
+                                <h3>Physiological analysis</h3>
+                            </div>
+                            <div class="ss-bmi mb-3">
+                                <div>
+                                    <div class="value" id="dispBMI">0.00</div>
+                                    <div class="label">BMI INDEX</div>
+                                    <span id="dispBMICat" class="badge normal-status">Normal</span>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-3">
+                                <div class="d-flex justify-content-between border-bottom pb-2">
+                                    <span class="ss-muted">Basal Metabolic Rate (BMR)</span>
+                                    <strong id="dispBMR">--</strong>
+                                </div>
+                                <div class="d-flex justify-content-between border-bottom pb-2">
+                                    <span class="ss-muted">Daily Energy Expenditure (TDEE)</span>
+                                    <strong id="dispTDEE">--</strong>
+                                </div>
+                                <div class="ss-card ss-card-pad ss-emphasis-box p-3">
+                                    <div class="d-flex justify-content-between align-items-center gap-3">
+                                        <span class="fw-semibold">Target calorie intake</span>
+                                        <strong id="dispTargetCals">--</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ss-card ss-card-pad">
+                            <div class="ss-section-title">
+                                <h3>Recommendation confidence</h3>
+                            </div>
+                            <div class="ss-confidence">
+                                <div class="ss-ring">
+                                    <span id="dispConfidenceScore">100%</span>
+                                </div>
+                                <div class="ss-notes">
+                                    <div class="ss-rail-title mb-2">AI Recommendation Confidence</div>
+                                    <div id="dispAdvisoryNotes">
+                                        <p class="mb-0 fw-semibold"><i class="fa-solid fa-circle-check me-2"></i>Standard healthy profile parameters. Safety engine approved.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="ss-card ss-tabs-wrap">
+                        <ul class="nav nav-tabs ss-tabs nav-justified" id="dashboardTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="diet-tab" data-bs-toggle="tab" data-bs-target="#diet-pane" type="button" role="tab">Diet and nutrition</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="workout-tab" data-bs-toggle="tab" data-bs-target="#workout-pane" type="button" role="tab">Workout schedule</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="progress-tab" data-bs-toggle="tab" data-bs-target="#progress-pane" type="button" role="tab">Progress tracker</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="feedback-tab" data-bs-toggle="tab" data-bs-target="#feedback-pane" type="button" role="tab">Ratings and feedback</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content ss-tab-content" id="dashboardTabsContent">
+                            <div class="tab-pane fade show active" id="diet-pane" role="tabpanel" aria-labelledby="diet-tab" tabindex="0">
+                                <div class="ss-card ss-card-pad ss-meal-panel">
+                                    <div class="ss-section-title">
+                                        <div>
+                                            <p class="ss-rail-title mb-2">Today's Meal Plan</p>
+                                            <h4 class="mb-1">Personalized nutrition plan generated by AI based on your goals and calorie requirements.</h4>
+                                            <p class="ss-muted mb-0">Balanced for your activity level, preferences, and target calories.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="ss-bars mb-0">
+                                        <div>
+                                            <div class="ss-bar-row">
+                                                <span>Carbohydrate</span>
+                                                <strong id="dispCarbsG">--</strong>
+                                            </div>
+                                            <div class="ss-bar-track"><div id="innerCarbsBar" class="ss-bar-fill carbs" style="width: 0%"></div></div>
+                                        </div>
+                                        <div>
+                                            <div class="ss-bar-row">
+                                                <span>Protein</span>
+                                                <strong id="dispProteinG">--</strong>
+                                            </div>
+                                            <div class="ss-bar-track"><div id="innerProteinBar" class="ss-bar-fill protein" style="width: 0%"></div></div>
+                                        </div>
+                                        <div>
+                                            <div class="ss-bar-row">
+                                                <span>Fat</span>
+                                                <strong id="dispFatG">--</strong>
+                                            </div>
+                                            <div class="ss-bar-track"><div id="innerFatBar" class="ss-bar-fill fat" style="width: 0%"></div></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="mealsList" class="ss-meal-grid"></div>
+                            </div>
+
+                            <div class="tab-pane fade" id="workout-pane" role="tabpanel" aria-labelledby="workout-tab" tabindex="0">
+                                <div class="ss-workout-panel">
+                                    <div class="ss-section-title">
+                                        <div>
+                                            <p class="ss-rail-title mb-2">Your Weekly Workout Plan</p>
+                                            <h4 class="mb-1">AI-generated workout schedule optimized for your fitness goals.</h4>
+                                            <p class="ss-workout-header-copy mb-0">Premium training blocks, progress tracking, and coaching cues for a cleaner fitness experience.</p>
+                                        </div>
+                                    </div>
+
+                                    <div id="workoutWeekNav" class="ss-exercise-days" role="tablist" aria-label="Workout days">
+                                        <button type="button" class="btn active" data-day="Monday">Mon</button>
+                                        <button type="button" class="btn" data-day="Tuesday">Tue</button>
+                                        <button type="button" class="btn" data-day="Wednesday">Wed</button>
+                                        <button type="button" class="btn" data-day="Thursday">Thu</button>
+                                        <button type="button" class="btn" data-day="Friday">Fri</button>
+                                        <button type="button" class="btn" data-day="Saturday">Sat</button>
+                                        <button type="button" class="btn" data-day="Sunday">Sun</button>
+                                    </div>
+
+                                    <div class="ss-workout-overview">
+                                        <div>
+                                            <div class="ss-rail-title mb-2">Day overview</div>
+                                            <div id="selectedDayTitle" class="ss-workout-title">Monday - Lower Body Focus</div>
+                                            <p class="ss-muted mb-3">Estimated duration, calorie burn, difficulty, and target muscles at a glance.</p>
+                                            <div class="ss-workout-meta">
+                                                <div class="ss-workout-meta-card">
+                                                    <span>Estimated Duration</span>
+                                                    <strong id="workoutDuration">45 mins</strong>
+                                                </div>
+                                                <div class="ss-workout-meta-card">
+                                                    <span>Calories Burn</span>
+                                                    <strong id="workoutCaloriesBurn">320 kcal</strong>
+                                                </div>
+                                                <div class="ss-workout-meta-card">
+                                                    <span>Difficulty</span>
+                                                    <strong id="workoutDifficulty">Intermediate</strong>
+                                                </div>
+                                                <div class="ss-workout-meta-card">
+                                                    <span>Target Muscles</span>
+                                                    <strong id="workoutTargetMuscles">Quads • Glutes • Core</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="ss-progress-shell">
+                                            <div class="ss-rail-title mb-2">Progress</div>
+                                            <div class="ss-progress-text">
+                                                <span id="workoutProgressText">3 of 5 exercises completed</span>
+                                                <strong id="workoutProgressPct">60%</strong>
+                                            </div>
+                                            <div class="ss-progress-bar"><span id="workoutProgressBar"></span></div>
+                                            <div class="ss-achievement-row">
+                                                <span class="ss-mini-badge">🔥 7 Day Streak</span>
+                                                <span class="ss-mini-badge">🏆 Consistency Master</span>
+                                                <span class="ss-mini-badge">⚡ Completed On Time</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="exerciseCardsList" class="ss-exercise-grid"></div>
+
+                                    <div class="ss-workout-summary">
+                                        <div class="ss-summary-metrics">
+                                            <div class="ss-summary-metric">
+                                                <span>Exercises</span>
+                                                <strong id="workoutSummaryExercises">--</strong>
+                                            </div>
+                                            <div class="ss-summary-metric">
+                                                <span>Estimated Time</span>
+                                                <strong id="workoutSummaryTime">--</strong>
+                                            </div>
+                                            <div class="ss-summary-metric">
+                                                <span>Calories Burn</span>
+                                                <strong id="workoutSummaryCalories">--</strong>
+                                            </div>
+                                            <div class="ss-summary-metric">
+                                                <span>Volume</span>
+                                                <strong id="workoutSummaryVolume">--</strong>
+                                            </div>
+                                            <div class="ss-summary-metric">
+                                                <span>Completion</span>
+                                                <strong id="workoutSummaryCompletion">--</strong>
+                                            </div>
+                                        </div>
+                                        <div class="ss-ring-sm" aria-hidden="true">
+                                            <span id="workoutCompletionRingValue">60%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="progress-pane" role="tabpanel" aria-labelledby="progress-tab" tabindex="0">
+                                <div class="ss-progress-dashboard">
+                                    <div class="ss-section-title">
+                                        <div>
+                                            <p class="ss-rail-title mb-2">Health &amp; Progress Dashboard</p>
+                                            <h4 class="mb-1">Track your fitness journey and receive AI-powered insights.</h4>
+                                            <p class="ss-muted mb-0">A premium analytics workspace for weight trends, hydration, recovery, and goal tracking.</p>
+                                        </div>
+                                        <span class="ss-pill"><i class="fa-solid fa-chart-line"></i> Analytics mode</span>
+                                    </div>
+
+                                    <div class="ss-progress-kpis">
+                                        <article class="ss-kpi-card">
+                                            <div class="ss-kpi-head">
+                                                <div>
+                                                    <div class="ss-kpi-label">Current Weight</div>
+                                                    <div id="progressWeightValue" class="ss-kpi-value">65 kg</div>
+                                                    <p id="progressWeightTrend" class="ss-kpi-trend">↓ 2.3 kg this month</p>
+                                                </div>
+                                                <div class="ss-kpi-icon"><i class="fa-solid fa-weight-scale"></i></div>
+                                            </div>
+                                            <span id="progressWeightBadge" class="ss-kpi-badge success">Improving</span>
+                                            <svg id="progressSparklineWeight" class="ss-sparkline" viewBox="0 0 120 44" preserveAspectRatio="none" aria-hidden="true"></svg>
+                                        </article>
+                                        <article class="ss-kpi-card">
+                                            <div class="ss-kpi-head">
+                                                <div>
+                                                    <div class="ss-kpi-label">Daily Water Goal</div>
+                                                    <div id="progressWaterValue" class="ss-kpi-value">8 / 10 L</div>
+                                                    <p id="progressWaterTrend" class="ss-kpi-trend">80% Complete</p>
+                                                </div>
+                                                <div class="ss-kpi-icon"><i class="fa-solid fa-droplet"></i></div>
+                                            </div>
+                                            <span id="progressWaterBadge" class="ss-kpi-badge warning">Needs attention</span>
+                                            <svg id="progressSparklineWater" class="ss-sparkline" viewBox="0 0 120 44" preserveAspectRatio="none" aria-hidden="true"></svg>
+                                        </article>
+                                        <article class="ss-kpi-card">
+                                            <div class="ss-kpi-head">
+                                                <div>
+                                                    <div class="ss-kpi-label">Sleep Quality</div>
+                                                    <div id="progressSleepValue" class="ss-kpi-value">8 hrs</div>
+                                                    <p id="progressSleepTrend" class="ss-kpi-trend">Excellent</p>
+                                                </div>
+                                                <div class="ss-kpi-icon"><i class="fa-solid fa-moon"></i></div>
+                                            </div>
+                                            <span id="progressSleepBadge" class="ss-kpi-badge success">Recovered</span>
+                                            <svg id="progressSparklineSleep" class="ss-sparkline" viewBox="0 0 120 44" preserveAspectRatio="none" aria-hidden="true"></svg>
+                                        </article>
+                                        <article class="ss-kpi-card">
+                                            <div class="ss-kpi-head">
+                                                <div>
+                                                    <div class="ss-kpi-label">Calorie Balance</div>
+                                                    <div id="progressCaloriesValue" class="ss-kpi-value">2181 kcal</div>
+                                                    <p id="progressCaloriesTrend" class="ss-kpi-trend">Within Target</p>
+                                                </div>
+                                                <div class="ss-kpi-icon"><i class="fa-solid fa-bolt"></i></div>
+                                            </div>
+                                            <span id="progressCaloriesBadge" class="ss-kpi-badge success">On track</span>
+                                            <svg id="progressSparklineCalories" class="ss-sparkline" viewBox="0 0 120 44" preserveAspectRatio="none" aria-hidden="true"></svg>
+                                        </article>
+                                    </div>
+
+                                    <div class="ss-progress-grid">
+                                        <aside class="ss-progress-column">
+                                            <form id="progressForm" class="ss-panel ss-panel-pad ss-progress-form">
+                                                <div class="ss-panel-head">
+                                                    <div>
+                                                        <h4 class="mb-1">Log Today&apos;s Metrics</h4>
+                                                        <p class="ss-panel-copy">Capture weight, hydration, recovery, and energy for the day.</p>
+                                                    </div>
+                                                    <span class="ss-pill"><i class="fa-solid fa-pen-to-square"></i> Quick entry</span>
+                                                </div>
+
+                                                <div class="row g-3">
+                                                    <div class="col-12">
+                                                        <div class="ss-floating-field">
+                                                            <div class="ss-field-icon"><i class="fa-solid fa-weight-scale"></i></div>
+                                                            <div class="form-floating">
+                                                                <input type="number" id="logWeight" class="form-control" step="0.1" placeholder="Weight">
+                                                                <label for="logWeight">Weight (kg)</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="ss-floating-field">
+                                                            <div class="ss-field-icon"><i class="fa-solid fa-droplet"></i></div>
+                                                            <div class="form-floating">
+                                                                <input type="number" id="logWater" class="form-control" step="0.1" placeholder="Water intake">
+                                                                <label for="logWater">Water Intake (L)</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="ss-floating-field">
+                                                            <div class="ss-field-icon"><i class="fa-solid fa-moon"></i></div>
+                                                            <div class="form-floating">
+                                                                <input type="number" id="logSleep" class="form-control" step="0.1" placeholder="Sleep hours">
+                                                                <label for="logSleep">Sleep (hrs)</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="ss-floating-field">
+                                                            <div class="ss-field-icon"><i class="fa-solid fa-utensils"></i></div>
+                                                            <div class="form-floating">
+                                                                <input type="number" id="logCalConsumed" class="form-control" placeholder="Calories consumed">
+                                                                <label for="logCalConsumed">Calories Consumed</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="ss-floating-field">
+                                                            <div class="ss-field-icon"><i class="fa-solid fa-fire"></i></div>
+                                                            <div class="form-floating">
+                                                                <input type="number" id="logCalBurned" class="form-control" placeholder="Calories burned">
+                                                                <label for="logCalBurned">Calories Burned</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="ss-floating-field">
+                                                            <div class="ss-field-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                                                            <div class="form-floating">
+                                                                <input type="date" id="logDate" class="form-control" placeholder="Date">
+                                                                <label for="logDate">Date</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <button type="submit" class="btn saathi-btn saathi-btn-primary w-100 mt-3">Save Today&apos;s Progress</button>
+                                                <div id="progressStatusMsg" class="alert mt-3 hidden" role="alert"></div>
+                                            </form>
+
+                                            <div class="ss-analytics-card">
+                                                <div class="ss-panel-head mb-3">
+                                                    <div>
+                                                        <h4 class="mb-1">Recent Activity</h4>
+                                                        <p class="ss-panel-copy">Latest daily actions captured from your logs.</p>
+                                                    </div>
+                                                    <span class="ss-pill"><i class="fa-solid fa-clock-rotate-left"></i> Live feed</span>
+                                                </div>
+                                                <div id="activityTimeline" class="ss-timeline-list"></div>
+                                            </div>
+                                        </aside>
+
+                                        <div class="ss-progress-column">
+                                            <section class="ss-panel ss-panel-pad">
+                                                <div class="ss-panel-head">
+                                                    <div>
+                                                        <p class="ss-rail-title mb-2">Weight Progress Chart</p>
+                                                        <h4 class="mb-1">Weight trend, goal line, and projected target line</h4>
+                                                        <p class="ss-panel-copy">Review weekly, monthly, or yearly progress snapshots.</p>
+                                                    </div>
+                                                    <div class="ss-toggle-group" id="progressRangeToggle" role="tablist" aria-label="Progress range">
+                                                        <button type="button" class="btn active" data-range="week">Weekly</button>
+                                                        <button type="button" class="btn" data-range="month">Monthly</button>
+                                                        <button type="button" class="btn" data-range="year">Yearly</button>
+                                                    </div>
+                                                </div>
+
+                                                <div class="ss-chart-frame">
+                                                    <div class="ss-chart-canvas-wrap">
+                                                        <canvas id="weightChart"></canvas>
+                                                    </div>
+                                                </div>
+
+                                                <div class="ss-chart-meta">
+                                                    <div class="ss-chart-legend">
+                                                        <span class="ss-legend-pill"><span class="ss-legend-dot" style="background: #15803D;"></span>Weight trend</span>
+                                                        <span class="ss-legend-pill"><span class="ss-legend-dot" style="background: #64748B;"></span>Goal line</span>
+                                                        <span class="ss-legend-pill"><span class="ss-legend-dot" style="background: #F59E0B;"></span>Projected target</span>
+                                                    </div>
+                                                    <div class="ss-milestone-row">
+                                                        <span id="milestoneStart" class="ss-milestone-pill"><i class="fa-solid fa-seedling"></i> Start</span>
+                                                        <span id="milestoneCurrent" class="ss-milestone-pill"><i class="fa-solid fa-location-dot"></i> Current</span>
+                                                        <span id="milestoneGoal" class="ss-milestone-pill"><i class="fa-solid fa-flag-checkered"></i> Goal</span>
+                                                    </div>
+                                                </div>
+                                            </section>
+
+                                            <div class="ss-progress-analytics-grid">
+                                                <article class="ss-analytics-card">
+                                                    <div class="ss-panel-head">
+                                                        <div>
+                                                            <p class="ss-rail-title mb-2">Lifestyle Analytics</p>
+                                                            <h4 class="mb-1">Water Intake</h4>
+                                                            <p class="ss-panel-copy">Daily hydration progress against your goal.</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ss-radial-widget">
+                                                        <svg class="ss-radial-chart" viewBox="0 0 200 200" aria-hidden="true">
+                                                            <circle class="ss-radial-track" cx="100" cy="100" r="90"></circle>
+                                                            <circle id="waterRadial" class="ss-radial-progress" cx="100" cy="100" r="90"></circle>
+                                                        </svg>
+                                                        <div class="ss-radial-label">
+                                                            <strong id="waterProgressValue">80%</strong>
+                                                            <span id="waterProgressCopy">8 / 10 L</span>
+                                                        </div>
+                                                    </div>
+                                                </article>
+
+                                                <article class="ss-analytics-card">
+                                                    <div class="ss-panel-head">
+                                                        <div>
+                                                            <p class="ss-rail-title mb-2">Lifestyle Analytics</p>
+                                                            <h4 class="mb-1">Sleep Tracking</h4>
+                                                            <p class="ss-panel-copy">Recovery hours and quality for the selected period.</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ss-radial-widget">
+                                                        <svg class="ss-radial-chart" viewBox="0 0 200 200" aria-hidden="true">
+                                                            <circle class="ss-radial-track" cx="100" cy="100" r="90"></circle>
+                                                            <circle id="sleepRadial" class="ss-radial-progress" cx="100" cy="100" r="90"></circle>
+                                                        </svg>
+                                                        <div class="ss-radial-label">
+                                                            <strong id="sleepProgressValue">8 hrs</strong>
+                                                            <span id="sleepProgressCopy">Excellent recovery</span>
+                                                        </div>
+                                                    </div>
+                                                </article>
+
+                                                <article class="ss-analytics-card">
+                                                    <div class="ss-panel-head">
+                                                        <div>
+                                                            <p class="ss-rail-title mb-2">Body Composition</p>
+                                                            <h4 class="mb-1">Estimated Metrics</h4>
+                                                            <p class="ss-panel-copy">A quick snapshot of body composition and target markers.</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ss-analytics-stat-grid">
+                                                        <div class="ss-stat-tile"><span>Current Weight</span><strong id="bodyCurrentWeight">--</strong></div>
+                                                        <div class="ss-stat-tile"><span>Goal Weight</span><strong id="bodyGoalWeight">--</strong></div>
+                                                        <div class="ss-stat-tile"><span>BMI</span><strong id="bodyBMI">--</strong></div>
+                                                        <div class="ss-stat-tile"><span>Body Fat %</span><strong id="bodyFatPct">--</strong></div>
+                                                        <div class="ss-stat-tile"><span>Muscle Mass</span><strong id="bodyMuscleMass">--</strong></div>
+                                                        <div class="ss-stat-tile"><span>Recovery</span><strong id="bodyRecovery">--</strong></div>
+                                                    </div>
+                                                </article>
+
+                                                <article class="ss-analytics-card">
+                                                    <div class="ss-panel-head">
+                                                        <div>
+                                                            <p class="ss-rail-title mb-2">AI Insights</p>
+                                                            <h4 class="mb-1">Coach recommendations</h4>
+                                                            <p class="ss-panel-copy">Context-aware guidance based on the selected period.</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ss-insight-card success">
+                                                        <strong>AI Insight</strong>
+                                                        <p class="mb-0 mt-1" id="progressInsightPrimary">You are maintaining a consistent pattern across your logs.</p>
+                                                    </div>
+                                                    <div class="ss-insight-card info">
+                                                        <strong>AI Recommendation</strong>
+                                                        <p class="mb-0 mt-1" id="progressInsightSecondary">Keep hydration steady and preserve your sleep window.</p>
+                                                    </div>
+                                                    <div class="ss-insight-card warning">
+                                                        <strong>AI Warning</strong>
+                                                        <p class="mb-0 mt-1" id="progressInsightWarning">No warnings detected for the current period.</p>
+                                                    </div>
+                                                </article>
+
+                                                <article class="ss-analytics-card">
+                                                    <div class="ss-panel-head">
+                                                        <div>
+                                                            <p class="ss-rail-title mb-2">Goals</p>
+                                                            <h4 class="mb-1">Fitness Goal Progress</h4>
+                                                            <p class="ss-panel-copy">Track weight, hydration, and sleep goals in one view.</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ss-goal-list">
+                                                        <div class="ss-goal-item">
+                                                            <span>Weight Goal</span>
+                                                            <strong id="weightGoalLabel">65kg → 60kg</strong>
+                                                            <div class="ss-progress-track"><span id="weightGoalFill" class="ss-progress-fill" style="width: 0%"></span></div>
+                                                            <small id="weightGoalPercent" class="text-secondary fw-semibold">0%</small>
+                                                        </div>
+                                                        <div class="ss-goal-item">
+                                                            <span>Hydration Goal</span>
+                                                            <strong id="hydrationGoalLabel">8 / 10 L</strong>
+                                                            <div class="ss-progress-track"><span id="hydrationGoalFill" class="ss-progress-fill" style="width: 0%"></span></div>
+                                                            <small id="hydrationGoalPercent" class="text-secondary fw-semibold">0%</small>
+                                                        </div>
+                                                        <div class="ss-goal-item">
+                                                            <span>Sleep Goal</span>
+                                                            <strong id="sleepGoalLabel">8 / 8 hrs</strong>
+                                                            <div class="ss-progress-track"><span id="sleepGoalFill" class="ss-progress-fill" style="width: 0%"></span></div>
+                                                            <small id="sleepGoalPercent" class="text-secondary fw-semibold">0%</small>
+                                                        </div>
+                                                    </div>
+                                                </article>
+
+                                                <article class="ss-analytics-card">
+                                                    <div class="ss-panel-head">
+                                                        <div>
+                                                            <p class="ss-rail-title mb-2">Health Score</p>
+                                                            <h4 class="mb-1">Overall Health Score</h4>
+                                                            <p class="ss-panel-copy">Combined view of nutrition, fitness, sleep, and hydration.</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ss-radial-widget">
+                                                        <svg class="ss-radial-chart" viewBox="0 0 200 200" aria-hidden="true">
+                                                            <circle class="ss-radial-track" cx="100" cy="100" r="90"></circle>
+                                                            <circle id="healthScoreRing" class="ss-radial-progress" cx="100" cy="100" r="90"></circle>
+                                                        </svg>
+                                                        <div class="ss-radial-label">
+                                                            <strong id="healthScoreValue">87 / 100</strong>
+                                                            <span id="healthScoreLabel">Excellent</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ss-score-grid">
+                                                        <div class="ss-score-row"><span>Nutrition</span><strong id="scoreNutrition">--</strong></div>
+                                                        <div class="ss-score-row"><span>Fitness</span><strong id="scoreFitness">--</strong></div>
+                                                        <div class="ss-score-row"><span>Sleep</span><strong id="scoreSleep">--</strong></div>
+                                                        <div class="ss-score-row"><span>Hydration</span><strong id="scoreHydration">--</strong></div>
+                                                    </div>
+                                                </article>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="feedback-pane" role="tabpanel" aria-labelledby="feedback-tab" tabindex="0">
+                                <div class="row g-3">
+                                    <div class="col-lg-5">
+                                        <form id="feedbackForm" class="ss-card ss-card-pad">
+                                            <div class="ss-section-title">
+                                                <h4 class="mb-0">Plan utility rating</h4>
+                                            </div>
+                                            <input type="hidden" id="selectedRatingVal" value="5">
+                                            <div class="mb-3">
+                                                <div id="starRatingSelector" class="d-flex gap-2 fs-3 mb-3" role="radiogroup" aria-label="Star rating">
+                                                    <button type="button" class="btn btn-link p-0 text-decoration-none star-btn" data-value="1" aria-label="1 star"></button>
+                                                    <button type="button" class="btn btn-link p-0 text-decoration-none star-btn" data-value="2" aria-label="2 stars"></button>
+                                                    <button type="button" class="btn btn-link p-0 text-decoration-none star-btn" data-value="3" aria-label="3 stars"></button>
+                                                    <button type="button" class="btn btn-link p-0 text-decoration-none star-btn" data-value="4" aria-label="4 stars"></button>
+                                                    <button type="button" class="btn btn-link p-0 text-decoration-none star-btn" data-value="5" aria-label="5 stars"></button>
+                                                </div>
+                                                <label for="feedbackComments" class="form-label">Notes / Comments</label>
+                                                <textarea id="feedbackComments" class="form-control" rows="5" placeholder="Share your thoughts about the plan..."></textarea>
+                                            </div>
+                                            <button type="submit" class="btn saathi-btn saathi-btn-primary">Submit Review</button>
+                                            <div id="feedbackStatusMsg" class="alert mt-3 hidden" role="alert"></div>
+                                        </form>
+                                    </div>
+                                    <div class="col-lg-7">
+                                        <div class="ss-card ss-card-pad">
+                                            <div class="ss-section-title">
+                                                <h4 class="mb-0">Review Timeline</h4>
+                                            </div>
+                                            <div id="feedbackTimeline" class="d-grid gap-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+
+                <aside class="ss-rail">
+                    <div class="ss-card ss-card-pad">
+                        <div class="ss-rail-title">Snapshot</div>
+                        <div class="ss-rail-list">
+                            <div class="ss-rail-chip">
+                                <span>Age</span>
+                                <strong id="railAge">--</strong>
+                            </div>
+                            <div class="ss-rail-chip">
+                                <span>Weight</span>
+                                <strong id="railWeight">--</strong>
+                            </div>
+                            <div class="ss-rail-chip">
+                                <span>Height</span>
+                                <strong id="railHeight">--</strong>
+                            </div>
+                            <div class="ss-rail-chip">
+                                <span>Diet</span>
+                                <strong id="railDiet">--</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ss-card ss-card-pad">
+                        <div class="ss-rail-title">Use notes</div>
+                        <p class="ss-muted mb-0">Track your plan, log daily metrics, and review recommendations from a clean, calm workspace.</p>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </section>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="customToast" class="toast ss-toast" role="status" aria-live="polite" aria-atomic="true">
+            <div class="toast-body d-flex justify-content-between align-items-center gap-3">
+                <span id="toastMessage">Updated</span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="testResultsModal" tabindex="-1" aria-labelledby="testResultsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="testResultsModalLabel">Test Results</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="testResultsContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

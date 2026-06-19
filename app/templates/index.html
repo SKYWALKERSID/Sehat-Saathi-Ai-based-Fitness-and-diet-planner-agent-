@@ -1,0 +1,455 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Sehat Saathi | AI Fitness & Diet Planner{% endblock %}
+
+{% block page_nav %}
+<header class="saathi-navbar sticky-top">
+    <div class="container-fluid px-3 px-lg-5">
+        <nav class="navbar navbar-expand-lg py-0" aria-label="Primary navigation">
+            <a class="navbar-brand d-flex align-items-center gap-3 fw-semibold text-decoration-none" href="#top">
+                <img src="{{ url_for('static', filename='img/sehatlogo.png') }}?v=20260619-9" alt="Sehat Saathi logo" class="saathi-brand-mark">
+                <span class="saathi-brand-name">Sehat Saathi</span>
+            </a>
+
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#landingNav" aria-controls="landingNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-between" id="landingNav">
+                <ul class="navbar-nav mx-auto gap-lg-2 my-3 my-lg-0">
+                    <li class="nav-item"><a class="nav-link saathi-nav-link" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link saathi-nav-link" href="#how-it-works">How It Works</a></li>
+                    <li class="nav-item"><a class="nav-link saathi-nav-link" href="#pricing">Pricing</a></li>
+                    <li class="nav-item"><a class="nav-link saathi-nav-link" href="#about">About</a></li>
+                </ul>
+
+                <div class="d-flex flex-column flex-lg-row gap-2 align-items-stretch align-items-lg-center">
+                    {% if current_user.is_authenticated %}
+                        <a class="btn saathi-btn saathi-btn-ghost" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                    {% else %}
+                        <a class="btn saathi-btn saathi-btn-ghost" href="{{ url_for('auth.login') }}">Login</a>
+                    {% endif %}
+                    <a class="btn saathi-btn saathi-btn-primary" href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('auth.signup') }}">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<section id="top" class="saathi-hero py-5">
+    <div class="container py-4 py-lg-5">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="saathi-badge mb-4 reveal">
+                    <i class="fa-solid fa-sparkles"></i>
+                    <span>AI-Powered Fitness &amp; Nutrition</span>
+                </div>
+
+                <h1 class="saathi-hero-title reveal">
+                    AI-Powered<br>
+                    <span>Fitness &amp; Diet</span><br>
+                    Planning for<br>
+                    Real Results
+                </h1>
+
+                <p class="saathi-hero-copy reveal">
+                    Generate personalized workout routines, calorie targets, and meal plans tailored to your goals, lifestyle, and dietary preferences.
+                </p>
+
+                <div class="d-flex flex-column flex-sm-row gap-3 mb-4 reveal">
+                    <a href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('auth.signup') }}" class="btn saathi-btn saathi-btn-primary btn-lg px-4">
+                        Get Started Free
+                    </a>
+                    <a href="#how-it-works" class="btn saathi-btn saathi-btn-ghost btn-lg px-4">
+                        Watch Demo
+                    </a>
+                </div>
+
+                <div class="saathi-benefits reveal">
+                    <div><i class="fa-solid fa-circle-check"></i> Personalized plans</div>
+                    <div><i class="fa-solid fa-circle-check"></i> Indian diet support</div>
+                    <div><i class="fa-solid fa-circle-check"></i> AI-powered recommendations</div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="saathi-mockup card border-0 reveal">
+                    <div class="saathi-mockup-top">
+                        <div>
+                            <p class="saathi-mockup-kicker mb-1">Dashboard Preview</p>
+                            <h2 class="h4 mb-0">Welcome back, User <span class="ms-1">👋</span></h2>
+                            <p class="saathi-muted mb-0">Here&apos;s your progress overview</p>
+                        </div>
+                        <span class="saathi-pill">Live</span>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-6 col-md-3">
+                            <div class="saathi-stat">
+                                <span>BMI</span>
+                                <strong>20.2</strong>
+                                <small>Normal</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="saathi-stat">
+                                <span>Goal</span>
+                                <strong>Gain Muscle</strong>
+                                <small>8 week cycle</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="saathi-stat">
+                                <span>Calories</span>
+                                <strong>2700/day</strong>
+                                <small>Target intake</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="saathi-stat">
+                                <span>Protein</span>
+                                <strong>135g/day</strong>
+                                <small>Macro target</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="saathi-chart-card mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <p class="saathi-mockup-kicker mb-1">Weekly progress</p>
+                                <h3 class="h6 mb-0">Weight trend</h3>
+                            </div>
+                            <span class="saathi-muted small">Last 7 days</span>
+                        </div>
+                        <svg viewBox="0 0 640 180" class="saathi-chart" role="img" aria-label="Weekly progress chart">
+                            <defs></defs>
+                            <g stroke="#E5E7EB" stroke-width="1">
+                                <line x1="0" y1="30" x2="640" y2="30"></line>
+                                <line x1="0" y1="70" x2="640" y2="70"></line>
+                                <line x1="0" y1="110" x2="640" y2="110"></line>
+                                <line x1="0" y1="150" x2="640" y2="150"></line>
+                            </g>
+                            <path d="M0,135 C70,125 110,122 160,118 C220,112 255,103 310,92 C370,80 425,88 480,72 C540,56 580,46 640,42" fill="none" stroke="#15803D" stroke-width="5" stroke-linecap="round"></path>
+                            <path d="M0,135 C70,125 110,122 160,118 C220,112 255,103 310,92 C370,80 425,88 480,72 C540,56 580,46 640,42 L640,170 L0,170 Z" fill="#22C55E" fill-opacity="0.12"></path>
+                            <g fill="#22C55E">
+                                <circle cx="0" cy="135" r="5"></circle>
+                                <circle cx="160" cy="118" r="5"></circle>
+                                <circle cx="310" cy="92" r="5"></circle>
+                                <circle cx="480" cy="72" r="5"></circle>
+                                <circle cx="640" cy="42" r="5"></circle>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-8">
+                            <div class="saathi-plan-card h-100">
+                                <p class="saathi-mockup-kicker mb-1">Today&apos;s plan</p>
+                                <div class="d-flex flex-column flex-sm-row justify-content-between gap-3">
+                                    <div>
+                                        <h3 class="h6 mb-2">Workout</h3>
+                                        <p class="mb-0">Push / Pull / Legs</p>
+                                    </div>
+                                    <div>
+                                        <h3 class="h6 mb-2">Calories</h3>
+                                        <p class="mb-0">2700 / 2700</p>
+                                    </div>
+                                    <div>
+                                        <h3 class="h6 mb-2">Water</h3>
+                                        <p class="mb-0">2.1 / 3.0L</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="saathi-streak-card h-100">
+                                <div class="saathi-streak-icon">🔥</div>
+                                <div>
+                                    <p class="saathi-mockup-kicker mb-1">7 Day Streak</p>
+                                    <h3 class="h6 mb-1">Keep it up!</h3>
+                                    <p class="mb-0 saathi-muted">You&apos;re doing great.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="saathi-section py-5" id="about">
+    <div class="container">
+        <div class="text-center mx-auto saathi-section-heading reveal">
+            <p class="saathi-kicker">Trusted by everyday users</p>
+            <h2>Designed for Students, Professionals and Fitness Enthusiasts</h2>
+        </div>
+
+        <div class="row g-4 mt-2">
+            <div class="col-md-6 col-lg-3">
+                <div class="saathi-info-card reveal">
+                    <div class="saathi-icon"><i class="fa-solid fa-dumbbell"></i></div>
+                    <h3 class="h5">Fitness Plans</h3>
+                    <p class="mb-0">Personalized workouts for your goals.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="saathi-info-card reveal">
+                    <div class="saathi-icon"><i class="fa-solid fa-bowl-food"></i></div>
+                    <h3 class="h5">Diet Planning</h3>
+                    <p class="mb-0">Indian diet plans tailored to preferences.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="saathi-info-card reveal">
+                    <div class="saathi-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <h3 class="h5">Progress Tracking</h3>
+                    <p class="mb-0">Track progress and stay consistent.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="saathi-info-card reveal">
+                    <div class="saathi-icon"><i class="fa-solid fa-robot"></i></div>
+                    <h3 class="h5">AI Recommendations</h3>
+                    <p class="mb-0">Smart suggestions based on your data.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="saathi-section py-5" id="features">
+    <div class="container">
+        <div class="text-center mx-auto saathi-section-heading reveal">
+            <p class="saathi-kicker">Product overview</p>
+            <h2>Powerful Features to Achieve Your Goals</h2>
+        </div>
+
+        <div class="row g-4 mt-2">
+            <div class="col-md-6">
+                <div class="saathi-feature-card reveal">
+                    <div class="saathi-feature-number">01</div>
+                    <h3>Personalized Fitness</h3>
+                    <p>Custom workout routines based on goals, fitness level, and activity preferences.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="saathi-feature-card reveal">
+                    <div class="saathi-feature-number">02</div>
+                    <h3>Smart Diet Planning</h3>
+                    <p>Meal plans adapted to calorie targets, food preferences, and dietary needs.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="saathi-feature-card reveal">
+                    <div class="saathi-feature-number">03</div>
+                    <h3>Progress Tracking</h3>
+                    <p>Monitor weight, BMI, measurements, and overall fitness improvements.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="saathi-feature-card reveal">
+                    <div class="saathi-feature-number">04</div>
+                    <h3>Safety First</h3>
+                    <p>Considers injuries, allergies, medical conditions, and restrictions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="saathi-section py-5" id="how-it-works">
+    <div class="container">
+        <div class="text-center mx-auto saathi-section-heading reveal">
+            <p class="saathi-kicker">Simple workflow</p>
+            <h2>How It Works</h2>
+        </div>
+
+        <div class="saathi-steps mt-4">
+            <div class="saathi-step reveal">
+                <div class="saathi-step-icon"><i class="fa-solid fa-user-pen"></i></div>
+                <h3>Create Profile</h3>
+                <p>Enter age, weight, height, goals, activity level, and dietary preferences.</p>
+            </div>
+            <div class="saathi-step-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            <div class="saathi-step reveal">
+                <div class="saathi-step-icon"><i class="fa-solid fa-brain"></i></div>
+                <h3>AI Analysis</h3>
+                <p>We analyze your inputs to estimate calories, macros, and training intensity.</p>
+            </div>
+            <div class="saathi-step-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            <div class="saathi-step reveal">
+                <div class="saathi-step-icon"><i class="fa-solid fa-list-check"></i></div>
+                <h3>Get Your Plan</h3>
+                <p>Receive a workout schedule and meal recommendations tailored to you.</p>
+            </div>
+            <div class="saathi-step-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            <div class="saathi-step reveal">
+                <div class="saathi-step-icon"><i class="fa-solid fa-chart-simple"></i></div>
+                <h3>Track Progress</h3>
+                <p>Log weight, water, sleep, calories, and review feedback over time.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="saathi-section py-5">
+    <div class="container">
+        <div class="text-center mx-auto saathi-section-heading reveal">
+            <p class="saathi-kicker">Sample output</p>
+            <h2>See What You&apos;ll Get</h2>
+        </div>
+
+        <div class="row g-4 mt-2">
+            <div class="col-lg-6">
+                <div class="saathi-example-card reveal">
+                    <p class="saathi-mockup-kicker">Sample Workout Plan</p>
+                    <h3 class="h4">Monday – Chest + Triceps</h3>
+                    <ul class="saathi-list">
+                        <li>Bench Press 4x10</li>
+                        <li>Incline Dumbbell Press 3x12</li>
+                        <li>Pushups 3x15</li>
+                        <li>Cable Fly 3x12</li>
+                        <li>Tricep Pushdown 3x15</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="saathi-example-card reveal">
+                    <p class="saathi-mockup-kicker">Sample Diet Plan</p>
+                    <h3 class="h4">One-day nutrition sample</h3>
+                    <ul class="saathi-list">
+                        <li><strong>Breakfast:</strong> Oats + Milk + Banana</li>
+                        <li><strong>Lunch:</strong> Rice + Dal + Paneer + Salad</li>
+                        <li><strong>Dinner:</strong> Roti + Sabzi + Salad + Curd</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="saathi-section py-5" id="pricing">
+    <div class="container">
+        <div class="text-center mx-auto saathi-section-heading reveal">
+            <p class="saathi-kicker">Pricing</p>
+            <h2>Simple plans for individuals and teams</h2>
+        </div>
+
+        <div class="row g-4 mt-2">
+            <div class="col-md-4">
+                <div class="saathi-price-card reveal">
+                    <p class="saathi-muted small mb-2">Starter</p>
+                    <h3 class="display-6 fw-semibold mb-1">Free</h3>
+                    <p class="saathi-muted">Best for trying the basics.</p>
+                    <ul class="saathi-bullets">
+                        <li>1 profile</li>
+                        <li>Workout plan</li>
+                        <li>Diet suggestions</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="saathi-price-card saathi-price-card--featured reveal">
+                    <p class="saathi-muted small mb-2">Pro</p>
+                    <h3 class="display-6 fw-semibold mb-1">₹499</h3>
+                    <p class="saathi-muted">For serious personal tracking.</p>
+                    <ul class="saathi-bullets">
+                        <li>Unlimited profiles</li>
+                        <li>Progress tracking</li>
+                        <li>Advanced recommendations</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="saathi-price-card reveal">
+                    <p class="saathi-muted small mb-2">Team</p>
+                    <h3 class="display-6 fw-semibold mb-1">Custom</h3>
+                    <p class="saathi-muted">For gyms, coaches, and institutions.</p>
+                    <ul class="saathi-bullets">
+                        <li>Multi-user access</li>
+                        <li>Analytics support</li>
+                        <li>Priority onboarding</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="saathi-cta py-5">
+    <div class="container">
+        <div class="saathi-cta-card reveal">
+            <h2>Ready to Start Your Fitness Journey?</h2>
+            <p>Get a personalized AI-generated fitness and nutrition plan today.</p>
+            <a href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('auth.signup') }}" class="btn saathi-btn saathi-btn-inverse btn-lg px-4">
+                Create Free Account
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const elements = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+        elements.forEach((el) => el.classList.add('is-visible'));
+        return;
+    }
+
+    const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                obs.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15 });
+
+    elements.forEach((el) => observer.observe(el));
+});
+</script>
+{% endblock %}
+
+{% block page_footer %}
+<footer class="saathi-footer">
+    <div class="container py-4 py-lg-5">
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <img src="{{ url_for('static', filename='img/sehatlogo.png') }}?v=20260619-9" alt="Sehat Saathi logo" class="saathi-footer-mark">
+                    <div>
+                        <h3 class="h5 mb-1">Sehat Saathi</h3>
+                        <p class="saathi-muted mb-0">AI Fitness &amp; Diet Planner</p>
+                    </div>
+                </div>
+                <p class="saathi-muted mb-0">A calm, modern health companion that turns everyday inputs into practical workout and nutrition plans.</p>
+            </div>
+            <div class="col-sm-6 col-lg-2">
+                <h4 class="h6 mb-3">Links</h4>
+                <ul class="list-unstyled saathi-footer-links mb-0">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                    <li><a href="{{ url_for('main.privacy_policy') }}">Privacy Policy</a></li>
+                    <li><a href="{{ url_for('main.terms_and_conditions') }}">Terms of Service</a></li>
+                    <li><a href="mailto:siddhesh.jabalpur49697@gmail.com">Contact</a></li>
+                </ul>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <h4 class="h6 mb-3">Support</h4>
+                <p class="saathi-muted mb-2">Email</p>
+                <a class="saathi-footer-email" href="mailto:siddhesh.jabalpur49697@gmail.com">siddhesh.jabalpur49697@gmail.com</a>
+            </div>
+        </div>
+        <div class="saathi-footer-bottom mt-4 pt-3">
+            <p class="mb-0">&copy; 2026 Sehat Saathi. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+{% endblock %}
+
