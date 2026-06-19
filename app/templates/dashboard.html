@@ -848,9 +848,13 @@
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
+        align-items: stretch;
     }
 
     .ss-exercise-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
         padding: 1.1rem;
         border-radius: 1.25rem;
         border: 1px solid var(--page-border);
@@ -870,6 +874,7 @@
         grid-template-columns: auto minmax(0, 1fr) auto;
         gap: 0.9rem;
         align-items: start;
+        min-width: 0;
     }
 
     .ss-exercise-thumb {
@@ -889,6 +894,7 @@
         font-weight: 800;
         letter-spacing: -0.03em;
         margin-bottom: 0.25rem;
+        line-height: 1.15;
     }
 
     .ss-exercise-subtitle {
@@ -912,13 +918,16 @@
     .ss-difficulty-badge.advanced { background: rgba(139, 92, 246, 0.12); color: #6d28d9; border-color: rgba(139, 92, 246, 0.2); }
 
     .ss-chip-row {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.5rem;
         margin-top: 1rem;
     }
 
     .ss-exercise-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         padding: 0.45rem 0.7rem;
         border-radius: 999px;
         border: 1px solid var(--page-border);
@@ -926,6 +935,11 @@
         color: var(--page-text);
         font-size: 0.8rem;
         font-weight: 600;
+        min-width: 0;
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .ss-exercise-details {
@@ -1562,6 +1576,10 @@
 
     @media (max-width: 575.98px) {
         .ss-exercise-card-head {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-chip-row {
             grid-template-columns: 1fr;
         }
 

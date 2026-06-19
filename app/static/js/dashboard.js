@@ -921,7 +921,7 @@
             list.innerHTML = `
                 <article class="ss-exercise-card stagger-item" style="grid-column: 1 / -1;">
                     <div class="ss-exercise-card-head">
-                        <div class="ss-exercise-thumb" aria-hidden="true">??</div>
+                        <div class="ss-exercise-thumb" aria-hidden="true">♻</div>
                         <div>
                             <div class="ss-exercise-name">Recovery Day</div>
                             <div class="ss-exercise-subtitle">Mobility • Stretching • Light movement</div>
