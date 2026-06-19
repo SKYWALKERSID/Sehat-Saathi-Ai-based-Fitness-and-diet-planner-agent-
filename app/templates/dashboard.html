@@ -163,64 +163,35 @@
         color: var(--page-muted);
     }
 
-    .ss-summary-table-wrap {
-        overflow: hidden;
-        border-radius: 1.25rem;
+    .ss-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .ss-summary-hero,
+    .ss-summary-stat {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
         border: 1px solid var(--page-border);
+        border-radius: 1.25rem;
         background: #fff;
         box-shadow: var(--page-shadow-soft);
     }
 
-    .ss-summary-table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-        display: block;
-    }
-
-    .ss-summary-table th,
-    .ss-summary-table td {
-        padding: 1.25rem 1.2rem;
-        border-right: 1px solid var(--page-border);
-        vertical-align: top;
-        min-width: 0;
-    }
-
-    .ss-summary-table th:last-child,
-    .ss-summary-table td:last-child {
-        border-right: 0;
-    }
-
-    .ss-summary-table th {
-        width: 34%;
-        text-align: left;
+    .ss-summary-hero {
+        grid-column: span 2;
         background: var(--page-surface-soft);
     }
 
-    .ss-summary-table tbody,
-    .ss-summary-table tr {
-        display: grid;
-        grid-template-columns: minmax(0, 1.55fr) repeat(4, minmax(0, 1fr));
-        align-items: stretch;
-        width: 100%;
+    .ss-summary-stat {
+        grid-column: span 1;
     }
 
-    .ss-summary-table th,
-    .ss-summary-table td {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-    }
-
-    .ss-summary-table th {
-        border-right: 1px solid var(--page-border);
-    }
-
-    .ss-summary-table td {
-        min-height: 100%;
-    }
-
-    .ss-summary-table .ss-profile-name {
+    .ss-summary-hero .ss-profile-name {
         font-size: clamp(2rem, 3vw, 3.2rem);
         line-height: 0.98;
         letter-spacing: -0.05em;
@@ -229,14 +200,14 @@
         max-width: 11ch;
     }
 
-    .ss-summary-table .ss-profile-meta {
+    .ss-summary-hero .ss-profile-meta {
         color: var(--page-muted);
         font-size: 1rem;
         line-height: 1.7;
         margin-bottom: 0;
     }
 
-    .ss-summary-table .ss-field-label {
+    .ss-summary-stat .ss-field-label {
         display: block;
         color: var(--page-muted);
         text-transform: uppercase;
@@ -246,7 +217,7 @@
         font-weight: 700;
     }
 
-    .ss-summary-table .ss-field-value {
+    .ss-summary-stat .ss-field-value {
         font-size: 1.4rem;
         font-weight: 700;
         letter-spacing: -0.03em;
@@ -254,7 +225,7 @@
         line-height: 1.1;
     }
 
-    .ss-summary-table .ss-field-note {
+    .ss-summary-stat .ss-field-note {
         color: var(--page-muted);
         font-size: 0.92rem;
         margin-top: 0.4rem;
@@ -1646,23 +1617,6 @@
             grid-template-columns: 1fr;
         }
 
-        .ss-summary-table,
-        .ss-summary-table tbody,
-        .ss-summary-table tr {
-            display: block;
-        }
-
-        .ss-summary-table th,
-        .ss-summary-table td {
-            display: block;
-            width: 100%;
-            border-right: 0;
-            border-bottom: 1px solid var(--page-border);
-        }
-
-        .ss-summary-table th {
-            width: 100%;
-        }
     }
 
     .ss-right-stack {
@@ -1838,24 +1792,13 @@
     }
 
     @media (max-width: 575.98px) {
-        .ss-summary-table,
-        .ss-summary-table tbody,
-        .ss-summary-table tr,
-        .ss-summary-table th,
-        .ss-summary-table td {
-            display: block;
-            width: 100%;
+        .ss-summary-grid {
+            grid-template-columns: 1fr;
         }
 
-        .ss-summary-table th,
-        .ss-summary-table td {
-            border-right: 0;
-            border-bottom: 1px solid var(--page-border);
-        }
-
-        .ss-summary-table tr:last-child th,
-        .ss-summary-table tr:last-child td {
-            border-bottom: 0;
+        .ss-summary-hero,
+        .ss-summary-stat {
+            grid-column: auto;
         }
 
         .ss-tabs .nav-link {
@@ -2067,33 +2010,31 @@
                         </div>
                     </section>
 
-                    <section class="ss-summary-table-wrap">
-                        <table class="ss-summary-table">
-                            <tbody>
-                                <tr>
-                                    <th scope="row">
-                                        <div class="ss-profile-name" id="dispUserName">Your health workspace</div>
-                                        <p class="ss-profile-meta mb-0" id="dispUserGoal"><i class="fa-solid fa-crosshairs"></i> Goal: General Fitness | Experience: Beginner</p>
-                                    </th>
-                                    <td>
-                                        <span class="ss-field-label">Age</span>
-                                        <div class="ss-field-value" id="dispUserAge">--</div>
-                                    </td>
-                                    <td>
-                                        <span class="ss-field-label">Weight</span>
-                                        <div class="ss-field-value" id="dispUserWeight">--</div>
-                                    </td>
-                                    <td>
-                                        <span class="ss-field-label">Height</span>
-                                        <div class="ss-field-value" id="dispUserHeight">--</div>
-                                    </td>
-                                    <td>
-                                        <span class="ss-field-label">Diet</span>
-                                        <div class="ss-field-value" id="dispUserDiet">--</div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <section class="ss-summary-grid">
+                        <article class="ss-summary-hero ss-card ss-card-pad">
+                            <div class="ss-profile-name" id="dispUserName">Your health workspace</div>
+                            <p class="ss-profile-meta mb-0" id="dispUserGoal"><i class="fa-solid fa-crosshairs"></i> Goal: General Fitness | Experience: Beginner</p>
+                        </article>
+
+                        <article class="ss-summary-stat ss-card ss-card-pad">
+                            <span class="ss-field-label">Age</span>
+                            <div class="ss-field-value" id="dispUserAge">--</div>
+                        </article>
+
+                        <article class="ss-summary-stat ss-card ss-card-pad">
+                            <span class="ss-field-label">Weight</span>
+                            <div class="ss-field-value" id="dispUserWeight">--</div>
+                        </article>
+
+                        <article class="ss-summary-stat ss-card ss-card-pad">
+                            <span class="ss-field-label">Height</span>
+                            <div class="ss-field-value" id="dispUserHeight">--</div>
+                        </article>
+
+                        <article class="ss-summary-stat ss-card ss-card-pad">
+                            <span class="ss-field-label">Diet</span>
+                            <div class="ss-field-value" id="dispUserDiet">--</div>
+                        </article>
                     </section>
 
                     <section class="ss-grid-2">
