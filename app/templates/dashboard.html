@@ -370,12 +370,18 @@
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 1rem;
+        align-items: stretch;
+    }
+
+    .ss-meal-grid > * {
+        min-width: 0;
     }
 
     .ss-meal-card {
         display: flex;
         flex-direction: column;
         gap: 1rem;
+        height: 100%;
         padding: 1.25rem;
         border-radius: 1.25rem;
         border: 1px solid var(--page-border);
@@ -397,20 +403,36 @@
     .ss-meal-card[data-meal="Dinner"] { --meal-accent: #8B5CF6; }
 
     .ss-meal-head {
-        display: flex;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
         justify-content: space-between;
         gap: 1rem;
-        align-items: flex-start;
+        align-items: start;
+        min-width: 0;
+    }
+
+    .ss-meal-main {
+        min-width: 0;
     }
 
     .ss-meal-title {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 0.8rem;
         font-size: 1.2rem;
         font-weight: 800;
         letter-spacing: -0.03em;
         margin-bottom: 0.25rem;
+        min-width: 0;
+    }
+
+    .ss-meal-name {
+        min-width: 0;
+        line-height: 1.08;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
     }
 
     .ss-meal-icon {
@@ -437,10 +459,11 @@
     }
 
     .ss-meal-badges {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
         gap: 0.5rem;
         justify-content: flex-end;
+        justify-items: end;
+        min-width: 0;
     }
 
     .ss-meal-badge {
@@ -455,6 +478,7 @@
         background: #fff;
         color: var(--page-text);
         white-space: nowrap;
+        max-width: 100%;
     }
 
     .ss-meal-badge.calories {
@@ -505,6 +529,8 @@
     .ss-food-list {
         display: grid;
         gap: 0.7rem;
+        flex: 1 1 auto;
+        align-content: start;
     }
 
     .ss-food-item {
@@ -547,6 +573,7 @@
         border-top: 1px solid var(--page-border);
         display: grid;
         gap: 0.8rem;
+        margin-top: auto;
     }
 
     .ss-macro-row {
@@ -612,7 +639,7 @@
 
     .ss-details-grid {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.5rem;
         margin-top: 0.85rem;
     }
@@ -662,6 +689,12 @@
 
     .ss-substitutions li {
         margin-bottom: 0.35rem;
+    }
+
+    @media (min-width: 1200px) {
+        .ss-details-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
     }
 
     .ss-menu-card,

@@ -726,6 +726,7 @@
         mealsList.innerHTML = "";
         diet.forEach(meal => {
             const col = document.createElement('div');
+            col.className = 'd-flex h-100';
             const meta = getMealMeta(meal.meal_type);
             const totalMacroCals = ((Number(meal.carbohydrates) || 0) * 4) + ((Number(meal.protein) || 0) * 4) + ((Number(meal.fats) || 0) * 9) || 1;
             const score = getMealScore(meal);
@@ -748,12 +749,12 @@
             const substitutions = (meal.food_items || []).map(food => buildSubstitutions(food.name || '', meta.substitutions)).slice(0, 3);
 
             col.innerHTML = `
-                <article class="ss-meal-card stagger-item" data-meal="${meal.meal_type}">
+                <article class="ss-meal-card stagger-item h-100 w-100" data-meal="${meal.meal_type}">
                     <div class="ss-meal-head">
-                        <div>
+                        <div class="ss-meal-main">
                             <div class="ss-meal-title">
                                 <span class="ss-meal-icon">${meta.icon}</span>
-                                <span>${meal.meal_type}</span>
+                                <span class="ss-meal-name">${meal.meal_type}</span>
                             </div>
                             <div class="ss-meal-time">${meta.time}</div>
                         </div>
