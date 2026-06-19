@@ -174,6 +174,8 @@
     .ss-summary-table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
+        display: block;
     }
 
     .ss-summary-table th,
@@ -181,6 +183,7 @@
         padding: 1.25rem 1.2rem;
         border-right: 1px solid var(--page-border);
         vertical-align: top;
+        min-width: 0;
     }
 
     .ss-summary-table th:last-child,
@@ -194,12 +197,36 @@
         background: var(--page-surface-soft);
     }
 
+    .ss-summary-table tbody,
+    .ss-summary-table tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) repeat(4, minmax(0, 1fr));
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .ss-summary-table th,
+    .ss-summary-table td {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .ss-summary-table th {
+        border-right: 1px solid var(--page-border);
+    }
+
+    .ss-summary-table td {
+        min-height: 100%;
+    }
+
     .ss-summary-table .ss-profile-name {
         font-size: clamp(2rem, 3vw, 3.2rem);
-        line-height: 1;
+        line-height: 0.98;
         letter-spacing: -0.05em;
         color: var(--ss-dark-green);
         margin-bottom: 0.75rem;
+        max-width: 11ch;
     }
 
     .ss-summary-table .ss-profile-meta {
@@ -224,6 +251,7 @@
         font-weight: 700;
         letter-spacing: -0.03em;
         color: var(--page-text);
+        line-height: 1.1;
     }
 
     .ss-summary-table .ss-field-note {
@@ -1616,6 +1644,24 @@
 
         .ss-floating-field {
             grid-template-columns: 1fr;
+        }
+
+        .ss-summary-table,
+        .ss-summary-table tbody,
+        .ss-summary-table tr {
+            display: block;
+        }
+
+        .ss-summary-table th,
+        .ss-summary-table td {
+            display: block;
+            width: 100%;
+            border-right: 0;
+            border-bottom: 1px solid var(--page-border);
+        }
+
+        .ss-summary-table th {
+            width: 100%;
         }
     }
 
