@@ -1081,9 +1081,11 @@
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 1rem;
+        align-items: stretch;
     }
 
     .ss-kpi-card {
+        height: 100%;
         display: grid;
         gap: 0.85rem;
         padding: 1rem;
@@ -1098,6 +1100,7 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 0.75rem;
+        min-width: 0;
     }
 
     .ss-kpi-icon {
@@ -1128,12 +1131,14 @@
         letter-spacing: -0.05em;
         font-weight: 800;
         margin-bottom: 0.2rem;
+        min-width: 0;
     }
 
     .ss-kpi-trend {
         font-size: 0.88rem;
         color: var(--page-muted);
         margin-bottom: 0;
+        min-width: 0;
     }
 
     .ss-kpi-badge {
@@ -1178,19 +1183,23 @@
         display: grid;
         grid-template-columns: 360px minmax(0, 1fr);
         gap: 1rem;
-        align-items: start;
+        align-items: stretch;
     }
 
     .ss-progress-column {
         display: grid;
         gap: 1rem;
+        align-content: start;
     }
 
     .ss-panel {
+        display: flex;
+        flex-direction: column;
         border: 1px solid var(--page-border);
         border-radius: 1.5rem;
         background: #fff;
         box-shadow: var(--page-shadow-soft);
+        min-width: 0;
     }
 
     .ss-panel-pad {
@@ -1203,6 +1212,7 @@
         justify-content: space-between;
         gap: 1rem;
         margin-bottom: 1rem;
+        min-width: 0;
     }
 
     .ss-panel-head h4 {
@@ -1243,6 +1253,7 @@
     }
 
     .ss-chart-frame {
+        flex: 1 1 auto;
         padding: 1rem;
         border-radius: 1.25rem;
         border: 1px solid var(--page-border);
@@ -1308,20 +1319,25 @@
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
+        align-items: stretch;
     }
 
     .ss-analytics-card {
+        display: flex;
+        flex-direction: column;
         border: 1px solid var(--page-border);
         border-radius: 1.5rem;
         background: #fff;
         box-shadow: var(--page-shadow-soft);
         padding: 1.2rem;
+        min-width: 0;
     }
 
     .ss-analytics-stat-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.75rem;
+        margin-top: auto;
     }
 
     .ss-stat-tile {
@@ -1352,6 +1368,7 @@
         place-items: center;
         min-height: 220px;
         position: relative;
+        flex: 1 1 auto;
     }
 
     .ss-radial-chart {
@@ -1526,6 +1543,7 @@
     .ss-chart-canvas-wrap {
         min-height: 340px;
         position: relative;
+        flex: 1 1 auto;
     }
 
     @media (max-width: 1199.98px) {
