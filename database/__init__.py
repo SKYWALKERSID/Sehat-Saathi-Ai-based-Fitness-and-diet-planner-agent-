@@ -3,7 +3,6 @@ from database.models import (
     User, Profile, FitnessGoals, WorkoutPlans, DietPlans,
     ProgressTracking, Feedback, Recommendations, HydrationRecords, WeatherHistory
 )
-from backend import create_app
 import json
 from datetime import datetime
 
@@ -12,6 +11,7 @@ _app = None
 def get_app():
     global _app
     if _app is None:
+        from backend import create_app
         _app = create_app()
     return _app
 
