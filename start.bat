@@ -2,30 +2,23 @@
 cd /d "%~dp0"
 title Sehat Saathi
 
+echo [1/3] Checking virtual environment...
 if not exist ".venv\Scripts\python.exe" (
-    echo [ERROR] Virtual environment (.venv) not found.
-    echo Please ensure the virtual environment is set up properly.
+    echo.
+    echo [ERROR] Virtual environment (.venv) was not found in:
+    echo %CD%\.venv
+    echo.
     pause
     exit /b 1
 )
 
-echo Stopping any conflicting python server processes...
-powershell -NoProfile -Command "Get-Process python -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*\.venv\Scripts\python.exe' } | Stop-Process -Force" >nul 2>nul
-
-echo Starting Sehat Saathi server...
-echo ----------------------------------------------------
-echo Server logs will appear below. Keep this window open.
-echo ----------------------------------------------------
-echo.
-
-:: Launch the browser in 3 seconds in the background
+echo [2/3] Launching browser in background...
 start "" cmd /c "timeout /t 3 >nul && start http://127.0.0.1:5000"
 
-:: Run the server in the foreground
+echo [3/3] Starting Flask application...
+echo --------------------------------------------------
 ".venv\Scripts\python.exe" run.py
-
-if errorlevel 1 (
-    echo.
-    echo [ERROR] Server exited with an error code.
-    pause
-)
+echo --------------------------------------------------
+echo.
+echo Flask server has stopped running.
+pause
