@@ -20,3 +20,11 @@ def dashboard():
 def analytics():
     # Render the detailed analytics reports page
     return render_template('analytics.html', profiles=current_user.profiles)
+
+@main_bp.route('/privacy-policy')
+def privacy_policy():
+    return render_template('privacy_policy.html')
+
+@main_bp.route('/terms-and-conditions')
+def terms_and_conditions():
+    return render_template('terms_and_conditions.html')

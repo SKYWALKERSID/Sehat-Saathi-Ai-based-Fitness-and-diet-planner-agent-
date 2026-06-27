@@ -1,4 +1,5 @@
-from app import create_app, db
+from backend import create_app
+from database.db import db
 
 app = create_app()
 
@@ -7,3 +8,4 @@ if __name__ == '__main__':
         db.create_all()  # Create all database tables on startup
         print("Database tables initialized successfully.")
     app.run(debug=True, host="127.0.0.1", port=5000, use_reloader=False)
+

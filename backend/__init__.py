@@ -35,6 +35,9 @@ def create_app(config_class=Config):
     login_manager.login_view = 'auth.login'
     login_manager.login_message_category = 'warning'
 
+    # Import models to register them with SQLAlchemy before create_all
+    import database.models
+
     # Create all DB tables on first run
     with app.app_context():
         db.create_all()
