@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const dashboardRoot = document.querySelector('#dashboardSection .ss-shell') || document.getElementById('dashboardSection');
     const dashboardGet = (id) => dashboardRoot?.querySelector(`#${id}`) || document.getElementById(id);
@@ -726,7 +726,7 @@
         mealsList.innerHTML = "";
         diet.forEach(meal => {
             const col = document.createElement('div');
-            col.className = 'd-flex h-100';
+            col.className = 'w-100';
             const meta = getMealMeta(meal.meal_type);
             const totalMacroCals = ((Number(meal.carbohydrates) || 0) * 4) + ((Number(meal.protein) || 0) * 4) + ((Number(meal.fats) || 0) * 9) || 1;
             const score = getMealScore(meal);
@@ -749,68 +749,75 @@
             const substitutions = (meal.food_items || []).map(food => buildSubstitutions(food.name || '', meta.substitutions)).slice(0, 3);
 
             col.innerHTML = `
-                <article class="ss-meal-card stagger-item h-100 w-100" data-meal="${meal.meal_type}">
-                    <div class="ss-meal-head">
-                        <div class="ss-meal-main">
-                            <div class="ss-meal-title">
-                                <span class="ss-meal-icon">${meta.icon}</span>
-                                <span class="ss-meal-name">${meal.meal_type}</span>
+                <article class="ss-meal-card stagger-item w-100" data-meal="${meal.meal_type}">
+                    <div class="ss-meal-left-col">
+                        <div class="ss-meal-head">
+                            <div class="ss-meal-main">
+                                <div class="ss-meal-title">
+                                    <span class="ss-meal-icon">${meta.icon}</span>
+                                    <span class="ss-meal-name">${meal.meal_type}</span>
+                                </div>
+                                <div class="ss-meal-time">${meta.time}</div>
                             </div>
-                            <div class="ss-meal-time">${meta.time}</div>
+                            <div class="ss-meal-badges">
+                                <span class="ss-meal-badge calories">${Math.round(meal.calories)} kcal</span>
+                                <span class="ss-meal-badge protein">${Math.round(meal.protein)}g Protein</span>
+                            </div>
                         </div>
-                        <div class="ss-meal-badges">
-                            <span class="ss-meal-badge calories">${Math.round(meal.calories)} kcal</span>
-                            <span class="ss-meal-badge protein">${Math.round(meal.protein)}g Protein</span>
+
+                        <div class="ss-score-box mt-3">
+                            <div>
+                                <div class="ss-score-label">Nutrition Score</div>
+                                <div class="ss-score-value">${score}/100</div>
+                            </div>
+                            <span class="ss-score-pill">${scoreLabel}</span>
                         </div>
                     </div>
 
-                    <div class="ss-score-box">
-                        <div>
-                            <div class="ss-score-label">Nutrition Score</div>
-                            <div class="ss-score-value">${score}/100</div>
-                        </div>
-                        <span class="ss-score-pill">${scoreLabel}</span>
-                    </div>
-
-                    <div class="ss-food-list">
-                        ${foodsHtml}
-                    </div>
-
-                    <div class="ss-macro-section">
-                        <div class="ss-macro-row">
-                            <div class="ss-macro-row-head"><span>Protein</span><strong>${Math.round(meal.protein)}g</strong></div>
-                            <div class="ss-macro-track"><div class="ss-macro-fill protein" style="width: ${Math.round(((Number(meal.protein) || 0) * 4 / totalMacroCals) * 100)}%"></div></div>
-                        </div>
-                        <div class="ss-macro-row">
-                            <div class="ss-macro-row-head"><span>Carbs</span><strong>${Math.round(meal.carbohydrates)}g</strong></div>
-                            <div class="ss-macro-track"><div class="ss-macro-fill carbs" style="width: ${Math.round(((Number(meal.carbohydrates) || 0) * 4 / totalMacroCals) * 100)}%"></div></div>
-                        </div>
-                        <div class="ss-macro-row">
-                            <div class="ss-macro-row-head"><span>Fat</span><strong>${Math.round(meal.fats)}g</strong></div>
-                            <div class="ss-macro-track"><div class="ss-macro-fill fat" style="width: ${Math.round(((Number(meal.fats) || 0) * 9 / totalMacroCals) * 100)}%"></div></div>
+                    <div class="ss-meal-mid-col">
+                        <div class="ss-rail-title mb-2">Food Items</div>
+                        <div class="ss-food-list">
+                            ${foodsHtml}
                         </div>
                     </div>
 
-                    <details class="ss-meal-details">
-                        <summary><i class="fa-solid fa-chevron-down"></i> View Details</summary>
-                        <div class="ss-details-grid">
-                            <div class="ss-detail-chip"><span>Calories</span><strong>${Math.round(meal.calories)} kcal</strong></div>
-                            <div class="ss-detail-chip"><span>Protein</span><strong>${Math.round(meal.protein)}g</strong></div>
-                            <div class="ss-detail-chip"><span>Carbs</span><strong>${Math.round(meal.carbohydrates)}g</strong></div>
-                            <div class="ss-detail-chip"><span>Fat</span><strong>${Math.round(meal.fats)}g</strong></div>
-                            <div class="ss-detail-chip"><span>Fiber</span><strong>${fiber}g</strong></div>
+                    <div class="ss-meal-right-col">
+                        <div class="ss-macro-section">
+                            <div class="ss-macro-row">
+                                <div class="ss-macro-row-head"><span>Protein</span><strong>${Math.round(meal.protein)}g</strong></div>
+                                <div class="ss-macro-track"><div class="ss-macro-fill protein" style="width: ${Math.round(((Number(meal.protein) || 0) * 4 / totalMacroCals) * 100)}%"></div></div>
+                            </div>
+                            <div class="ss-macro-row">
+                                <div class="ss-macro-row-head"><span>Carbs</span><strong>${Math.round(meal.carbohydrates)}g</strong></div>
+                                <div class="ss-macro-track"><div class="ss-macro-fill carbs" style="width: ${Math.round(((Number(meal.carbohydrates) || 0) * 4 / totalMacroCals) * 100)}%"></div></div>
+                            </div>
+                            <div class="ss-macro-row">
+                                <div class="ss-macro-row-head"><span>Fat</span><strong>${Math.round(meal.fats)}g</strong></div>
+                                <div class="ss-macro-track"><div class="ss-macro-fill fat" style="width: ${Math.round(((Number(meal.fats) || 0) * 9 / totalMacroCals) * 100)}%"></div></div>
+                            </div>
                         </div>
-                        <div class="ss-substitutions">
-                            <h6>Food substitutions</h6>
-                            <ul>
-                                ${substitutions.map(item => `<li>${item}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </details>
 
-                    <div class="ss-meal-insight">
-                        <strong>AI Insight</strong><br>
-                        ${meta.insight}
+                        <details class="ss-meal-details mt-3">
+                            <summary><i class="fa-solid fa-chevron-down"></i> View Details</summary>
+                            <div class="ss-details-grid">
+                                <div class="ss-detail-chip"><span>Calories</span><strong>${Math.round(meal.calories)} kcal</strong></div>
+                                <div class="ss-detail-chip"><span>Protein</span><strong>${Math.round(meal.protein)}g</strong></div>
+                                <div class="ss-detail-chip"><span>Carbs</span><strong>${Math.round(meal.carbohydrates)}g</strong></div>
+                                <div class="ss-detail-chip"><span>Fat</span><strong>${Math.round(meal.fats)}g</strong></div>
+                                <div class="ss-detail-chip"><span>Fiber</span><strong>${fiber}g</strong></div>
+                            </div>
+                            <div class="ss-substitutions mt-3">
+                                <h6>Food substitutions</h6>
+                                <ul>
+                                    ${substitutions.map(item => `<li>${item}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </details>
+
+                        <div class="ss-meal-insight mt-3">
+                            <strong>AI Insight</strong><br>
+                            ${meta.insight}
+                        </div>
                     </div>
                 </article>
             `;

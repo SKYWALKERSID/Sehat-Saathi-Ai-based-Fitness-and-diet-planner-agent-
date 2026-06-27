@@ -382,15 +382,145 @@
         gap: 0.85rem;
     }
 
+
+    .ss-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .ss-section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .ss-section-title h3,
+    .ss-section-title h4 {
+        font-size: 1.35rem;
+        letter-spacing: -0.03em;
+        margin-bottom: 0;
+    }
+
+    .ss-muted {
+        color: var(--page-muted);
+    }
+
+    .ss-bmi {
+        display: grid;
+        place-items: center;
+        min-height: 240px;
+        text-align: center;
+        border: 1px solid var(--page-border);
+        border-radius: 1.35rem;
+        background: #fff;
+    }
+
+    .ss-bmi .value {
+        font-size: clamp(3rem, 5vw, 4.8rem);
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        line-height: 1;
+    }
+
+    .ss-bmi .label {
+        color: var(--page-muted);
+        margin-bottom: 0.35rem;
+    }
+
+    .ss-bars {
+        display: grid;
+        gap: 0.9rem;
+    }
+
+    .ss-bar-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .ss-bar-track {
+        height: 10px;
+        border-radius: 999px;
+        background: #edf2f7;
+        overflow: hidden;
+    }
+
+    .ss-bar-fill {
+        height: 100%;
+        border-radius: inherit;
+    }
+
+    .ss-bar-fill.carbs { background: var(--ss-green); }
+    .ss-bar-fill.protein { background: #f59e0b; }
+    .ss-bar-fill.fat { background: #94a3b8; }
+
+    .ss-macro-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .ss-macro {
+        text-align: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--page-border);
+    }
+
+    .ss-macro small {
+        display: block;
+        color: var(--page-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .ss-macro strong {
+        font-size: 1.05rem;
+    }
+
+    .ss-tabs-wrap {
+        overflow: hidden;
+        border-radius: 1.5rem;
+    }
+
+    .ss-tabs {
+        background: #fff;
+        border-bottom: 1px solid var(--page-border);
+    }
+
+    .ss-tabs .nav-link {
+        border: 0;
+        color: var(--page-muted);
+        padding: 1rem 1.15rem;
+        font-weight: 600;
+        border-radius: 0;
+    }
+
+    .ss-tabs .nav-link.active {
+        color: var(--page-text) !important;
+        background: var(--page-surface-soft) !important;
+    }
+
+    .ss-tab-content {
+        background: #fff;
+        padding: 1.15rem;
+    }
+
+    .ss-menu-list {
+        display: grid;
+        gap: 0.85rem;
+    }
+
     .ss-meal-panel {
         margin-bottom: 1rem;
     }
 
     .ss-meal-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 1rem;
-        align-items: stretch;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
     }
 
     .ss-meal-grid > * {
@@ -398,12 +528,12 @@
     }
 
     .ss-meal-card {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        height: 100%;
-        padding: 1.25rem;
-        border-radius: 1.25rem;
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr) 280px;
+        gap: 1.5rem;
+        align-items: start;
+        padding: 1.5rem;
+        border-radius: 1.5rem;
         border: 1px solid var(--page-border);
         background: #fff;
         box-shadow: var(--page-shadow-soft);
@@ -416,15 +546,16 @@
         border-color: rgba(15, 23, 42, 0.16);
     }
 
-    .ss-meal-card[data-meal="Breakfast"] { --meal-accent: #F59E0B; }
-    .ss-meal-card[data-meal="Lunch"] { --meal-accent: #22C55E; }
-        transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    .ss-meal-left-col,
+    .ss-meal-mid-col,
+    .ss-meal-right-col {
+        min-width: 0;
     }
 
-    .ss-meal-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
-        border-color: rgba(15, 23, 42, 0.16);
+    .ss-meal-left-col {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
     }
 
     .ss-meal-card[data-meal="Breakfast"] { --meal-accent: #F59E0B; }
@@ -432,6 +563,13 @@
     .ss-meal-card[data-meal="Evening Snack"] { --meal-accent: #3B82F6; }
     .ss-meal-card[data-meal="Snack"] { --meal-accent: #3B82F6; }
     .ss-meal-card[data-meal="Dinner"] { --meal-accent: #8B5CF6; }
+
+    @media (max-width: 991.98px) {
+        .ss-meal-card {
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+    }
 
     .ss-meal-head {
         display: flex;
@@ -558,9 +696,8 @@
 
     .ss-food-list {
         display: grid;
-        gap: 0.7rem;
-        flex: 1 1 auto;
-        align-content: start;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 0.75rem;
     }
 
     .ss-food-item {
