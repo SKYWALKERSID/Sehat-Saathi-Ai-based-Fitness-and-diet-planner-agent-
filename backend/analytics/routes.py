@@ -3,9 +3,13 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from database.db import db
-from database.models import Profile, ProgressTracking
+from database.models import (
+    Profile, ProgressTracking, HydrationRecords,
+    NutritionLogs, HealthMetrics, MCPLogs
+)
 import backend.ml_models.predictor as predictor
 from backend.mcp.progress import analyze_progress_history
+from backend.mcp.nutrition import lookup_food_nutrition
 
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/api')
 
@@ -51,6 +55,18 @@ def log_progress():
                 calories_burned=burned
             )
             db.session.add(log_entry)
+
+        # Sync HydrationRecords for the logged date
+        hydration_rec = HydrationRecords.query.filter_by(profile_id=profile_id, log_date=log_date).first()
+        if hydration_rec:
+            hydration_rec.consumed_l = water
+        else:
+            db.session.add(HydrationRecords(
+                profile_id=profile_id,
+                log_date=log_date,
+                target_l=profile.water_intake,
+                consumed_l=water
+            ))
             
         # Update user's profile weight with latest tracked weight for accurate future calculations
         profile.weight = weight
@@ -100,6 +116,14 @@ def run_progress_mcp_analysis(profile_id):
     } for l in logs]
     
     analysis = analyze_progress_history(history_logs, profile.fitness_goal)
+    db.session.add(MCPLogs(
+        profile_id=profile.id,
+        mcp_name="Progress MCP",
+        tool_name="progress_analyze",
+        input_params=json.dumps({"logs_count": len(history_logs), "target_goal": profile.fitness_goal}),
+        output_data=json.dumps(analysis)
+    ))
+    db.session.commit()
     return jsonify(analysis), 200
 
 @analytics_bp.route('/progress/predict/<int:profile_id>', methods=['GET'])
@@ -139,3 +163,145 @@ def run_progress_predictions(profile_id):
             "90_days": predictions["90_days"]
         }
     }), 200
+
+
+@analytics_bp.route('/nutrition-logs/<int:profile_id>', methods=['GET'])
+@login_required
+def get_nutrition_logs(profile_id):
+    profile = Profile.query.filter_by(id=profile_id, user_id=current_user.id).first()
+    if not profile:
+        return jsonify({"error": "Access denied"}), 403
+
+    logs = NutritionLogs.query.filter_by(profile_id=profile_id).order_by(NutritionLogs.created_at.desc()).limit(30).all()
+    return jsonify([{
+        "id": l.id,
+        "log_date": l.log_date,
+        "food_name": l.food_name,
+        "quantity_g": l.quantity_g,
+        "calories": l.calories,
+        "protein": l.protein,
+        "carbs": l.carbs,
+        "fat": l.fat
+    } for l in logs]), 200
+
+
+@analytics_bp.route('/nutrition-logs', methods=['POST'])
+@login_required
+def add_nutrition_log():
+    data = request.json or {}
+    profile_id = data.get('profile_id')
+    food_name = str(data.get('food_name', '')).strip()
+    quantity_g = float(data.get('quantity_g', 100.0))
+    log_date = data.get('log_date', datetime.today().strftime('%Y-%m-%d'))
+
+    if not profile_id or not food_name or quantity_g <= 0:
+        return jsonify({"error": "Valid profile_id, food_name, and quantity_g are required"}), 400
+
+    profile = Profile.query.filter_by(id=int(profile_id), user_id=current_user.id).first()
+    if not profile:
+        return jsonify({"error": "Access denied"}), 403
+
+    lookup = lookup_food_nutrition(food_name)
+    details = lookup["details"]
+    scale = quantity_g / 100.0
+
+    entry = NutritionLogs(
+        profile_id=profile.id,
+        log_date=log_date,
+        food_name=lookup.get("food", food_name).title(),
+        quantity_g=round(quantity_g, 1),
+        calories=round(details["calories"] * scale, 1),
+        protein=round(details["protein"] * scale, 1),
+        carbs=round(details["carbs"] * scale, 1),
+        fat=round(details["fat"] * scale, 1)
+    )
+    db.session.add(entry)
+    db.session.add(MCPLogs(
+        profile_id=profile.id,
+        mcp_name="Nutrition MCP",
+        tool_name="nutrition_lookup",
+        input_params=json.dumps({"food_name": food_name, "quantity_g": quantity_g}),
+        output_data=json.dumps(lookup)
+    ))
+    db.session.commit()
+    return jsonify({
+        "message": "Food logged via Nutrition MCP",
+        "entry": {
+            "id": entry.id,
+            "log_date": entry.log_date,
+            "food_name": entry.food_name,
+            "quantity_g": entry.quantity_g,
+            "calories": entry.calories,
+            "protein": entry.protein,
+            "carbs": entry.carbs,
+            "fat": entry.fat,
+            "found_in_mcp": lookup["found"]
+        }
+    }), 201
+
+
+@analytics_bp.route('/health-metrics/<int:profile_id>', methods=['GET'])
+@login_required
+def get_health_metrics(profile_id):
+    profile = Profile.query.filter_by(id=profile_id, user_id=current_user.id).first()
+    if not profile:
+        return jsonify({"error": "Access denied"}), 403
+
+    metrics = HealthMetrics.query.filter_by(profile_id=profile_id).order_by(HealthMetrics.log_date.desc(), HealthMetrics.created_at.desc()).limit(30).all()
+    return jsonify([{
+        "id": m.id,
+        "log_date": m.log_date,
+        "blood_pressure": m.blood_pressure,
+        "heart_rate": m.heart_rate,
+        "blood_sugar": m.blood_sugar,
+        "notes": m.notes
+    } for m in metrics]), 200
+
+
+@analytics_bp.route('/health-metrics', methods=['POST'])
+@login_required
+def add_health_metric():
+    data = request.json or {}
+    profile_id = data.get('profile_id')
+    if not profile_id:
+        return jsonify({"error": "Missing profile_id"}), 400
+
+    profile = Profile.query.filter_by(id=int(profile_id), user_id=current_user.id).first()
+    if not profile:
+        return jsonify({"error": "Access denied"}), 403
+
+    log_date = data.get('log_date', datetime.today().strftime('%Y-%m-%d'))
+    bp = str(data.get('blood_pressure', '')).strip() or None
+    hr = int(data['heart_rate']) if data.get('heart_rate') else None
+    sugar = float(data['blood_sugar']) if data.get('blood_sugar') else None
+    notes = str(data.get('notes', '')).strip()
+
+    metric = HealthMetrics(
+        profile_id=profile.id,
+        log_date=log_date,
+        blood_pressure=bp,
+        heart_rate=hr,
+        blood_sugar=sugar,
+        notes=notes
+    )
+    db.session.add(metric)
+    db.session.commit()
+    return jsonify({"message": "Health vitals logged successfully!"}), 201
+
+
+@analytics_bp.route('/mcp-logs/<int:profile_id>', methods=['GET'])
+@login_required
+def get_mcp_logs(profile_id):
+    profile = Profile.query.filter_by(id=profile_id, user_id=current_user.id).first()
+    if not profile:
+        return jsonify({"error": "Access denied"}), 403
+
+    logs = MCPLogs.query.filter_by(profile_id=profile_id).order_by(MCPLogs.created_at.desc()).limit(25).all()
+    return jsonify([{
+        "id": l.id,
+        "mcp_name": l.mcp_name,
+        "tool_name": l.tool_name,
+        "input_params": json.loads(l.input_params) if l.input_params else {},
+        "output_data": json.loads(l.output_data) if l.output_data else {},
+        "created_at": l.created_at.strftime('%Y-%m-%d %H:%M:%S')
+    } for l in logs]), 200

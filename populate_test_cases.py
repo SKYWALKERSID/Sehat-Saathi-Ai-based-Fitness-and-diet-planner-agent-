@@ -1,17 +1,33 @@
-import database
-import recommender
 import os
 import json
 from datetime import datetime, timedelta
+import database
+import recommender
+from backend.mcp.rag import ensure_faiss_index
+from database.models import User
+from database.db import db
 
 def main():
-    print("Initializing test database...")
+    print("Building / verifying FAISS clinical RAG vector index...")
+    ensure_faiss_index()
+
+    print("Initializing database...")
     database.init_db()
-    
-    # 10 Test Cases as defined in Requirements
+
+    app = database.get_app()
+    with app.app_context():
+        demo_user = User.query.filter_by(email="demo@sehatsaathi.ai").first()
+        if not demo_user:
+            demo_user = User(email="demo@sehatsaathi.ai")
+            demo_user.set_password("demo1234")
+            db.session.add(demo_user)
+            db.session.commit()
+
+    # 10 Diverse Test Cases
     test_profiles = [
         # 1. Beginner Weight Loss
         {
+            "email": "demo@sehatsaathi.ai",
             "name": "Alice Cooper",
             "age": 25,
             "gender": "Female",
@@ -20,7 +36,7 @@ def main():
             "fitness_goal": "Weight Loss",
             "activity_level": "Lightly Active",
             "workout_experience": "Beginner",
-            "water_intake": 2.0,
+            "water_intake": 2.5,
             "sleep_hours": 7.0,
             "diet_preference": "Non-Vegetarian",
             "medical_conditions": "None",
@@ -29,6 +45,7 @@ def main():
         },
         # 2. Beginner Weight Gain
         {
+            "email": "demo@sehatsaathi.ai",
             "name": "Bob Marley",
             "age": 22,
             "gender": "Male",
@@ -37,7 +54,7 @@ def main():
             "fitness_goal": "Weight Gain",
             "activity_level": "Moderately Active",
             "workout_experience": "Beginner",
-            "water_intake": 2.5,
+            "water_intake": 3.0,
             "sleep_hours": 8.0,
             "diet_preference": "Non-Vegetarian",
             "medical_conditions": "None",
@@ -46,6 +63,7 @@ def main():
         },
         # 3. Muscle Building
         {
+            "email": "demo@sehatsaathi.ai",
             "name": "Charlie Puth",
             "age": 29,
             "gender": "Male",
@@ -54,7 +72,7 @@ def main():
             "fitness_goal": "Muscle Building",
             "activity_level": "Very Active",
             "workout_experience": "Intermediate",
-            "water_intake": 3.0,
+            "water_intake": 3.5,
             "sleep_hours": 8.0,
             "diet_preference": "High Protein",
             "medical_conditions": "None",
@@ -63,6 +81,7 @@ def main():
         },
         # 4. Vegetarian Athlete
         {
+            "email": "demo@sehatsaathi.ai",
             "name": "Daisy Ridley",
             "age": 27,
             "gender": "Female",
@@ -80,6 +99,7 @@ def main():
         },
         # 5. Vegan Weight Loss
         {
+            "email": "demo@sehatsaathi.ai",
             "name": "Ethan Hunt",
             "age": 35,
             "gender": "Male",
@@ -88,7 +108,7 @@ def main():
             "fitness_goal": "Weight Loss",
             "activity_level": "Sedentary",
             "workout_experience": "Beginner",
-            "water_intake": 1.8,
+            "water_intake": 2.5,
             "sleep_hours": 6.5,
             "diet_preference": "Vegan",
             "medical_conditions": "Asthma",
@@ -97,6 +117,7 @@ def main():
         },
         # 6. Senior Citizen
         {
+            "email": "demo@sehatsaathi.ai",
             "name": "Fiona Gallagher",
             "age": 68,
             "gender": "Female",
@@ -105,7 +126,7 @@ def main():
             "fitness_goal": "General Fitness",
             "activity_level": "Lightly Active",
             "workout_experience": "Beginner",
-            "water_intake": 1.5,
+            "water_intake": 2.0,
             "sleep_hours": 7.0,
             "diet_preference": "Low Carb",
             "medical_conditions": "Hypertension",
@@ -114,6 +135,7 @@ def main():
         },
         # 7. Sedentary Office Worker
         {
+            "email": "demo@sehatsaathi.ai",
             "name": "George Costanza",
             "age": 42,
             "gender": "Male",
@@ -122,32 +144,34 @@ def main():
             "fitness_goal": "Fat Loss",
             "activity_level": "Sedentary",
             "workout_experience": "Beginner",
-            "water_intake": 1.2,
-            "sleep_hours": 5.5,
+            "water_intake": 2.2,
+            "sleep_hours": 6.5,
             "diet_preference": "Non-Vegetarian",
             "medical_conditions": "None",
             "injuries": "Lower back pain",
             "allergies": "None"
         },
-        # 8. College Student
+        # 8. College Student (Jain Diet)
         {
+            "email": "demo@sehatsaathi.ai",
             "name": "Hannah Baker",
             "age": 20,
             "gender": "Female",
             "height": 163.0,
             "weight": 52.0,
-            "fitness_goal": "General Fitness",
+            "fitness_goal": "Endurance",
             "activity_level": "Moderately Active",
             "workout_experience": "Intermediate",
-            "water_intake": 2.2,
-            "sleep_hours": 6.0,
-            "diet_preference": "Non-Vegetarian",
+            "water_intake": 2.5,
+            "sleep_hours": 7.5,
+            "diet_preference": "Jain",
             "medical_conditions": "None",
             "injuries": "None",
             "allergies": "None"
         },
         # 9. Advanced Gym User
         {
+            "email": "demo@sehatsaathi.ai",
             "name": "Ian Somerhalder",
             "age": 31,
             "gender": "Male",
@@ -165,6 +189,7 @@ def main():
         },
         # 10. Strength Athlete
         {
+            "email": "demo@sehatsaathi.ai",
             "name": "Jack Reacher",
             "age": 38,
             "gender": "Male",
@@ -181,72 +206,64 @@ def main():
             "allergies": "None"
         }
     ]
-    
+
     summary_report = []
-    summary_headers = "| ID | Name | Age/Gender | Goal | BMI (Cat) | BMR (kcal) | Target Cals | Confidence | Ex. Exclusions Applied |"
-    summary_divider = "|---|---|---|---|---|---|---|---|---|"
+    summary_headers = "| ID | Name | Age/Gender | Goal | Diet | BMI (Cat) | BMR (kcal) | Target Cals | Confidence | Safety Substitutions Applied |"
+    summary_divider = "|---|---|---|---|---|---|---|---|---|---|"
     summary_report.append(summary_headers)
     summary_report.append(summary_divider)
-    
+
     today = datetime.today()
-    
-    print("\nRunning rule-based recommendations for all 10 profiles...")
-    
+
+    print("\nRunning ML + MCP recommendations for all 10 profiles...")
+
     for idx, profile in enumerate(test_profiles, start=1):
-        # 1. Generate recommendation
         goals, diet, workouts = recommender.generate_full_profile(profile)
-        
-        # 2. Save user profile
-        user_id = database.save_user_profile(profile, goals, diet, workouts)
-        
-        # 3. Add 4 days of mock progress logs to test charts trends
-        for day_offset in range(4):
-            log_date = (today - timedelta(days=3 - day_offset)).strftime('%Y-%m-%d')
-            # Mock weight floating around initial
-            mock_w = profile["weight"] - (day_offset * 0.15) if "loss" in profile["fitness_goal"].lower() else profile["weight"] + (day_offset * 0.15)
-            # Add some variations
+        profile_id = database.save_user_profile(profile, goals, diet, workouts)
+
+        # Add 7 days of progress logs to test charts & velocity trends
+        for day_offset in range(7):
+            log_date = (today - timedelta(days=6 - day_offset)).strftime('%Y-%m-%d')
+            delta = -0.12 if "loss" in profile["fitness_goal"].lower() else (0.10 if "gain" in profile["fitness_goal"].lower() or "muscle" in profile["fitness_goal"].lower() else -0.04)
+            mock_w = profile["weight"] + (day_offset * delta)
             progress_entry = {
                 "log_date": log_date,
                 "weight": round(mock_w, 2),
-                "water_intake": round(profile["water_intake"] + (day_offset * 0.1), 1),
-                "sleep_hours": round(profile["sleep_hours"] + (day_offset * 0.2), 1),
-                "calories_consumed": round(goals["target_calories"] - (100 if day_offset%2==0 else -50)),
-                "calories_burned": 250 + (day_offset * 50)
+                "water_intake": round(profile["water_intake"] + ((day_offset % 3) * 0.1), 1),
+                "sleep_hours": round(profile["sleep_hours"] + ((day_offset % 2) * 0.2), 1),
+                "calories_consumed": round(goals["target_calories"] - (60 if day_offset % 2 == 0 else -40)),
+                "calories_burned": 260 + (day_offset * 35)
             }
-            database.log_progress(user_id, progress_entry)
-            
-        # 4. Insert user feedback reviews
+            database.log_progress(profile_id, progress_entry)
+
         database.save_feedback(
-            user_id=user_id, 
-            rating=5 if goals["confidence_score"] >= 85 else 4,
-            comments=f"Automated test profile {idx} generation check. Plan fits targets perfectly.",
+            user_id=profile_id,
+            rating=5 if goals["confidence_score"] >= 80 else 4,
+            comments=f"Verified ML + MCP profile #{idx} ({profile['fitness_goal']} / {profile['diet_preference']}).",
             log_date=today.strftime('%Y-%m-%d')
         )
-        
-        # 5. Extract applied workout constraints / substitutions
+
         exclusions = []
         for day, day_exercises in workouts.items():
             for ex in day_exercises:
                 if ex.get("caution"):
                     exclusions.append(f"{ex['name']} ({day})")
-        
-        exclusions_str = ", ".join(list(set(exclusions))) if exclusions else "None"
-        
-        # 6. Format Markdown Report row
-        row = f"| {user_id} | {profile['name']} | {profile['age']}/{profile['gender']} | {profile['fitness_goal']} | {goals['bmi']} ({goals['bmi_category']}) | {goals['bmr']} | {goals['target_calories']} | {goals['confidence_score']}% | {exclusions_str} |"
-        summary_report.append(row)
-        print(f"Profile {idx} saved: {profile['name']} - Target: {goals['target_calories']} kcal, Confidence: {goals['confidence_score']}%")
 
-    print("\nWriting validation report file...")
-    report_content = "\n".join(summary_report)
-    
-    with open("test_results_summary.md", "w") as f:
-        f.write("# Automated Profile Verification Results\n\n")
-        f.write(report_content)
-        f.write("\n\nAll test profiles are fully verified and loaded into SQLite 'fitness_planner.db'.\n")
-        
-    print("\nVerification summary successfully saved to 'test_results_summary.md'.")
-    print("Database populate done!")
+        exclusions_str = ", ".join(sorted(set(exclusions))) if exclusions else "None"
+
+        row = f"| {profile_id} | {profile['name']} | {profile['age']}/{profile['gender']} | {profile['fitness_goal']} | {profile['diet_preference']} | {goals['bmi']} ({goals['bmi_category']}) | {goals['bmr']} | {goals['target_calories']} | {goals['confidence_score']}% | {exclusions_str} |"
+        summary_report.append(row)
+        print(f"Profile {idx} saved: {profile['name']} ({profile['diet_preference']}) - Target: {goals['target_calories']} kcal, Score: {goals['confidence_score']}%")
+
+    os.makedirs("reports", exist_ok=True)
+    report_path = os.path.join("reports", "test_results.md")
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write("# Automated ML + MCP Profile Verification Results\n\n")
+        f.write("\n".join(summary_report))
+        f.write("\n\nAll 10 test profiles are verified and loaded into SQLite `database/fitness_planner.db` under `demo@sehatsaathi.ai` (password: `demo1234`).\n")
+
+    print(f"\nVerification summary saved to '{report_path}'.")
+    print("Database population complete!")
 
 if __name__ == '__main__':
     main()

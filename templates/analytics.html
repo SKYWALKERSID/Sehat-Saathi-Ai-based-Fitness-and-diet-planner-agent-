@@ -1,0 +1,464 @@
+{% extends 'base.html' %}
+
+{% block title %}ML & MCP Analytics - Sehat Saathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Top Header & Profile Switcher -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-4 bg-surface rounded-4 border shadow-sm">
+        <div>
+            <span class="badge bg-success-subtle text-success mb-2"><i class="fa-solid fa-microchip me-1"></i> AI Telemetry & Clinical MCP Hub</span>
+            <h2 class="fw-bold mb-1">Deep Health Analytics & MCP Audit</h2>
+            <p class="text-secondary small mb-0">Inspect ML weight projections, log granular food items via Nutrition MCP, track clinical vitals, and audit MCP tool executions.</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div>
+                <label for="analyticsProfileSelect" class="form-label small text-secondary mb-1">Active Profile</label>
+                <select id="analyticsProfileSelect" class="form-select fw-semibold">
+                    <option value="">Loading profiles...</option>
+                </select>
+            </div>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-success rounded-pill px-3 mt-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Empty state if no profile -->
+    <div id="analyticsEmptyState" class="card p-5 text-center border rounded-4 shadow-sm d-none">
+        <i class="fa-solid fa-user-plus fs-1 text-success mb-3"></i>
+        <h4 class="fw-bold">No Fitness Profile Found</h4>
+        <p class="text-secondary mb-3">Create a fitness profile on the Dashboard first to unlock ML predictions and MCP telemetry.</p>
+        <div>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-success rounded-pill px-4">Go to Dashboard</a>
+        </div>
+    </div>
+
+    <div id="analyticsMainContent">
+        <!-- Row 1: ML Model Projections & Progress MCP KPI Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="p-3 bg-surface rounded-4 border shadow-sm h-100">
+                    <div class="text-secondary small fw-semibold mb-1"><i class="fa-solid fa-wand-magic-sparkles text-success me-1"></i> 7-Day ML Forecast</div>
+                    <h3 class="fw-bold mb-1" id="pred7Days">-- kg</h3>
+                    <span class="badge bg-success-subtle text-success" id="predGoalBadge">Goal Model Active</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-surface rounded-4 border shadow-sm h-100">
+                    <div class="text-secondary small fw-semibold mb-1"><i class="fa-solid fa-chart-line text-primary me-1"></i> 30-Day ML Forecast</div>
+                    <h3 class="fw-bold mb-1" id="pred30Days">-- kg</h3>
+                    <span class="text-secondary small" id="predVelocityText">Velocity: -- kg/wk</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-surface rounded-4 border shadow-sm h-100">
+                    <div class="text-secondary small fw-semibold mb-1"><i class="fa-solid fa-flag-checkered text-warning me-1"></i> 90-Day ML Trajectory</div>
+                    <h3 class="fw-bold mb-1" id="pred90Days">-- kg</h3>
+                    <span class="text-secondary small" id="predPlanScore">Plan Score: --/100</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-surface rounded-4 border shadow-sm h-100">
+                    <div class="text-secondary small fw-semibold mb-1"><i class="fa-solid fa-cloud-sun text-info me-1"></i> Weather & Hydration MCP</div>
+                    <h3 class="fw-bold mb-1" id="mcpHydrationTarget">-- L/day</h3>
+                    <span class="text-secondary small" id="mcpWeatherSummary">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2: Charts (ML Trajectory & Lifestyle Dual-Axis Chart) -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="p-4 bg-surface rounded-4 border shadow-sm h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="fw-bold mb-0">ML Weight Forecast Horizon</h5>
+                            <p class="text-secondary small mb-0">Current vs. 7-Day, 30-Day, and 90-Day ML Regression</p>
+                        </div>
+                        <span class="badge bg-light text-dark border">GradientBoostingRegressor</span>
+                    </div>
+                    <div style="height: 260px;">
+                        <canvas id="mlHorizonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="p-4 bg-surface rounded-4 border shadow-sm h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="fw-bold mb-0">Hydration & Sleep Compliance</h5>
+                            <p class="text-secondary small mb-0">Dual-axis Progress MCP lifestyle telemetry</p>
+                        </div>
+                        <span class="badge bg-light text-dark border" id="complianceBadge">Compliance: --%</span>
+                    </div>
+                    <div style="height: 260px;">
+                        <canvas id="lifestyleChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3: Nutrition MCP Food Logger & Clinical Health Vitals Logger -->
+        <div class="row g-4 mb-4">
+            <!-- Nutrition MCP Logger -->
+            <div class="col-lg-6">
+                <div class="p-4 bg-surface rounded-4 border shadow-sm h-100">
+                    <h5 class="fw-bold mb-1"><i class="fa-solid fa-utensils text-success me-2"></i>Nutrition MCP Food Logger</h5>
+                    <p class="text-secondary small mb-3">Log individual foods and automatically compute macros via the Nutrition MCP server.</p>
+
+                    <form id="nutritionLogForm" class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <input type="text" id="nutriFoodName" class="form-control form-control-sm" placeholder="Food (e.g., Paneer, Oats, Dal, Eggs)" required>
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="number" id="nutriQuantityG" class="form-control form-control-sm" placeholder="Grams (g)" value="100" min="10" max="1000" required>
+                        </div>
+                        <div class="col-sm-3">
+                            <button type="submit" class="btn btn-success btn-sm w-100 fw-semibold">
+                                <i class="fa-solid fa-plus me-1"></i> Log Food
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="table-responsive" style="max-height: 230px; overflow-y: auto;">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Food</th>
+                                    <th>Serving</th>
+                                    <th>Calories</th>
+                                    <th>P / C / F</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nutritionLogsTableBody">
+                                <tr><td colspan="5" class="text-center text-secondary small py-3">No nutrition logs yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clinical Health Vitals Logger -->
+            <div class="col-lg-6">
+                <div class="p-4 bg-surface rounded-4 border shadow-sm h-100">
+                    <h5 class="fw-bold mb-1"><i class="fa-solid fa-heart-pulse text-danger me-2"></i>Clinical Health Vitals Logger</h5>
+                    <p class="text-secondary small mb-3">Track Blood Pressure, Resting Heart Rate, and Fasting Blood Sugar for safety screening.</p>
+
+                    <form id="vitalsLogForm" class="row g-2 mb-3">
+                        <div class="col-sm-3">
+                            <input type="text" id="vitalBP" class="form-control form-control-sm" placeholder="BP (120/80)" required>
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="number" id="vitalHR" class="form-control form-control-sm" placeholder="HR (bpm)" min="40" max="220" required>
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="number" step="0.1" id="vitalSugar" class="form-control form-control-sm" placeholder="Sugar (mg/dL)" min="50" max="400" required>
+                        </div>
+                        <div class="col-sm-3">
+                            <button type="submit" class="btn btn-dark btn-sm w-100 fw-semibold">
+                                <i class="fa-solid fa-notes-medical me-1"></i> Save Vitals
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="table-responsive" style="max-height: 230px; overflow-y: auto;">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Blood Pressure</th>
+                                    <th>Heart Rate</th>
+                                    <th>Blood Sugar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vitalsTableBody">
+                                <tr><td colspan="4" class="text-center text-secondary small py-3">No clinical vitals recorded yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 4: MCP Tool Execution Audit Log -->
+        <div class="p-4 bg-surface rounded-4 border shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="fw-bold mb-0"><i class="fa-solid fa-terminal text-success me-2"></i>MCP Server Execution Audit Trail</h5>
+                    <p class="text-secondary small mb-0">Real-time trace of Nutrition, Exercise, Weather, Progress, and RAG MCP tool calls for this profile.</p>
+                </div>
+                <button id="refreshMcpLogsBtn" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    <i class="fa-solid fa-rotate me-1"></i> Refresh Logs
+                </button>
+            </div>
+            <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Timestamp (UTC)</th>
+                            <th>MCP Server</th>
+                            <th>Request Payload</th>
+                            <th>Response Summary</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mcpLogsTableBody">
+                        <tr><td colspan="4" class="text-center text-secondary small py-3">Loading MCP audit trail...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const profileSelect = document.getElementById('analyticsProfileSelect');
+    const emptyState = document.getElementById('analyticsEmptyState');
+    const mainContent = document.getElementById('analyticsMainContent');
+    let currentProfileId = null;
+    let horizonChart = null;
+    let lifestyleChart = null;
+
+    function loadProfiles() {
+        fetch('/api/profiles')
+            .then(r => r.json())
+            .then(profiles => {
+                profileSelect.innerHTML = '';
+                if (!profiles || profiles.length === 0) {
+                    emptyState.classList.remove('d-none');
+                    mainContent.classList.add('d-none');
+                    return;
+                }
+                emptyState.classList.add('d-none');
+                mainContent.classList.remove('d-none');
+                profiles.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = `${p.name} (${p.goal})`;
+                    profileSelect.appendChild(opt);
+                });
+                currentProfileId = profiles[0].id;
+                profileSelect.value = currentProfileId;
+                loadAllAnalytics(currentProfileId);
+            });
+    }
+
+    profileSelect.addEventListener('change', (e) => {
+        if (e.target.value) {
+            currentProfileId = parseInt(e.target.value, 10);
+            loadAllAnalytics(currentProfileId);
+        }
+    });
+
+    function loadAllAnalytics(profileId) {
+        Promise.all([
+            fetch(`/api/profile/${profileId}`).then(r => r.json()),
+            fetch(`/api/progress/${profileId}`).then(r => r.json()),
+            fetch(`/api/progress/analyze/${profileId}`).then(r => r.json()),
+            fetch(`/api/progress/predict/${profileId}`).then(r => r.json()),
+            fetch(`/api/nutrition-logs/${profileId}`).then(r => r.json()),
+            fetch(`/api/health-metrics/${profileId}`).then(r => r.json()),
+            fetch(`/api/mcp-logs/${profileId}`).then(r => r.json())
+        ]).then(([profileData, progressLogs, analysis, predictData, nutriLogs, vitals, mcpLogs]) => {
+            const u = profileData.user || {};
+            const g = profileData.goals || {};
+            const preds = predictData.predictions || {};
+
+            document.getElementById('pred7Days').textContent = `${preds['7_days'] ?? u.weight} kg`;
+            document.getElementById('pred30Days').textContent = `${preds['30_days'] ?? u.weight} kg`;
+            document.getElementById('pred90Days').textContent = `${preds['90_days'] ?? u.weight} kg`;
+            document.getElementById('predGoalBadge').textContent = `ML Goal: ${g.predicted_goal || u.fitness_goal} (${g.goal_confidence || g.confidence_score}%)`;
+            document.getElementById('predVelocityText').textContent = `Weekly Velocity: ${analysis.weekly_velocity_kg ?? 0} kg/wk`;
+            document.getElementById('predPlanScore').textContent = `Plan Score: ${g.recommendation_score || g.confidence_score}/100 | KNN: ${g.diet_knn_suggestion || u.diet_preference}`;
+            document.getElementById('mcpHydrationTarget').textContent = `${u.hydration_target_l || u.water_intake} L/day`;
+            document.getElementById('mcpWeatherSummary').textContent = g.weather_context
+                ? `${g.weather_context.temperature_c}°C • ${g.weather_context.condition}`
+                : 'Weather MCP Active';
+
+            const sleepComp = analysis.sleep_compliance_pct ?? 100;
+            const waterComp = analysis.water_compliance_pct ?? 100;
+            document.getElementById('complianceBadge').textContent = `Water ${waterComp}% • Sleep ${sleepComp}%`;
+
+            renderHorizonChart(u.weight, preds);
+            renderLifestyleChart(progressLogs, u);
+            renderNutritionLogs(nutriLogs);
+            renderVitalsLogs(vitals);
+            renderMcpLogs(mcpLogs);
+        });
+    }
+
+    function renderHorizonChart(currentWeight, preds) {
+        const ctx = document.getElementById('mlHorizonChart')?.getContext('2d');
+        if (!ctx) return;
+        if (horizonChart) horizonChart.destroy();
+        const points = [
+            Number(currentWeight) || 70,
+            Number(preds['7_days']) || Number(currentWeight) || 70,
+            Number(preds['30_days']) || Number(currentWeight) || 70,
+            Number(preds['90_days']) || Number(currentWeight) || 70
+        ];
+        horizonChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Current', '7 Days', '30 Days', '90 Days'],
+                datasets: [{
+                    label: 'Predicted Weight (kg)',
+                    data: points,
+                    borderColor: '#16A34A',
+                    backgroundColor: 'rgba(34, 197, 94, 0.14)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    function renderLifestyleChart(logs, user) {
+        const ctx = document.getElementById('lifestyleChart')?.getContext('2d');
+        if (!ctx) return;
+        if (lifestyleChart) lifestyleChart.destroy();
+        const items = (logs && logs.length > 0) ? logs : [{
+            log_date: new Date().toISOString().split('T')[0],
+            water_intake: user.water_intake || 3,
+            sleep_hours: user.sleep_hours || 7.5
+        }];
+        lifestyleChart = new Chart(ctx, {
+            data: {
+                labels: items.map(i => i.log_date),
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Water (L)',
+                        data: items.map(i => i.water_intake),
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderRadius: 6,
+                        yAxisID: 'y'
+                    },
+                    {
+                        type: 'line',
+                        label: 'Sleep (hrs)',
+                        data: items.map(i => i.sleep_hours),
+                        borderColor: '#16A34A',
+                        borderWidth: 2.5,
+                        yAxisID: 'y1',
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'Water (L)' } },
+                    y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { display: false }, title: { display: true, text: 'Sleep (hrs)' } }
+                }
+            }
+        });
+    }
+
+    function renderNutritionLogs(logs) {
+        const tbody = document.getElementById('nutritionLogsTableBody');
+        if (!logs || logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary small py-3">No nutrition logs yet. Log a food item above!</td></tr>';
+            return;
+        }
+        tbody.innerHTML = logs.map(l => `
+            <tr>
+                <td class="small text-secondary">${l.log_date}</td>
+                <td class="fw-semibold">${l.food_name}</td>
+                <td><span class="badge bg-light text-dark border">${Math.round(l.quantity_g || 100)}g</span></td>
+                <td>${Math.round(l.calories)} kcal</td>
+                <td class="small text-secondary">${l.protein}g / ${l.carbs}g / ${l.fat}g</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderVitalsLogs(logs) {
+        const tbody = document.getElementById('vitalsTableBody');
+        if (!logs || logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary small py-3">No clinical vitals recorded yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = logs.map(v => `
+            <tr>
+                <td class="small text-secondary">${v.log_date}</td>
+                <td class="fw-semibold">${v.blood_pressure} mmHg</td>
+                <td>${v.heart_rate} bpm</td>
+                <td>${v.blood_sugar} mg/dL</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderMcpLogs(logs) {
+        const tbody = document.getElementById('mcpLogsTableBody');
+        if (!logs || logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary small py-3">No MCP executions recorded yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = logs.map(m => `
+            <tr>
+                <td class="small text-secondary">${m.created_at}</td>
+                <td><span class="badge bg-success-subtle text-success">${m.mcp_name} • ${m.tool_name}</span></td>
+                <td class="small font-monospace text-truncate" style="max-width: 260px;">${JSON.stringify(m.input_params)}</td>
+                <td class="small font-monospace text-truncate" style="max-width: 320px;">${JSON.stringify(m.output_data)}</td>
+            </tr>
+        `).join('');
+    }
+
+    document.getElementById('nutritionLogForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!currentProfileId) return;
+        const foodName = document.getElementById('nutriFoodName').value;
+        const quantityG = parseFloat(document.getElementById('nutriQuantityG').value) || 100;
+        fetch('/api/nutrition-logs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                profile_id: currentProfileId,
+                food_name: foodName,
+                quantity_g: quantityG
+            })
+        })
+        .then(r => r.json())
+        .then(() => {
+            document.getElementById('nutriFoodName').value = '';
+            loadAllAnalytics(currentProfileId);
+        });
+    });
+
+    document.getElementById('vitalsLogForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!currentProfileId) return;
+        fetch('/api/health-metrics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                profile_id: currentProfileId,
+                blood_pressure: document.getElementById('vitalBP').value,
+                heart_rate: document.getElementById('vitalHR').value,
+                blood_sugar: document.getElementById('vitalSugar').value
+            })
+        })
+        .then(r => r.json())
+        .then(() => {
+            document.getElementById('vitalsLogForm').reset();
+            loadAllAnalytics(currentProfileId);
+        });
+    });
+
+    document.getElementById('refreshMcpLogsBtn')?.addEventListener('click', () => {
+        if (currentProfileId) loadAllAnalytics(currentProfileId);
+    });
+
+    loadProfiles();
+});
+</script>
+{% endblock %}

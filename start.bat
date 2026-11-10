@@ -1,24 +1,27 @@
 @echo off
-cd /d "%~dp0"
-title Sehat Saathi
+echo ===================================================
+echo   SEHAT SAATHI - AI FITNESS & DIET PLANNER AGENT
+echo ===================================================
 
-echo [1/3] Checking virtual environment...
 if not exist ".venv\Scripts\python.exe" (
-    echo.
-    echo [ERROR] Virtual environment venv was not found in:
-    echo %CD%\.venv
-    echo.
-    pause
-    exit /b 1
+    echo [1/4] Creating Python virtual environment...
+    python -m venv .venv
 )
 
-echo [2/3] Launching browser in background...
-start "" cmd /c "timeout /t 3 >nul && start http://127.0.0.1:5000"
+echo [2/4] Installing / verifying dependencies...
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 
-echo [3/3] Starting Flask application...
-echo --------------------------------------------------
-".venv\Scripts\python.exe" run.py
-echo --------------------------------------------------
-echo.
-echo Flask server has stopped running.
+if not exist "backend\ml_models\fitness_goal_model.pkl" (
+    echo [3/4] Training ML models...
+    .\.venv\Scripts\python.exe backend\ml_models\train.py
+)
+
+if not exist "database\fitness_planner.db" (
+    echo [3.5/4] Populating initial demo database & FAISS RAG index...
+    .\.venv\Scripts\python.exe populate_test_cases.py
+)
+
+echo [4/4] Starting Flask Server at http://127.0.0.1:5000 ...
+start http://127.0.0.1:5000
+.\.venv\Scripts\python.exe run.py
 pause

@@ -2041,7 +2041,9 @@
                                 <select id="fitness_goal" class="form-select" required>
                                     <option value="">Select goal</option>
                                     <option>Fat Loss</option>
+                                    <option>Weight Loss</option>
                                     <option>Muscle Gain</option>
+                                    <option>Strength Training</option>
                                     <option>General Fitness</option>
                                     <option>Endurance</option>
                                     <option>Maintenance</option>
@@ -2090,6 +2092,9 @@
                                     <option>Vegan</option>
                                     <option>Eggetarian</option>
                                     <option>Jain</option>
+                                    <option>High Protein</option>
+                                    <option>Low Carb</option>
+                                    <option>Keto</option>
                                 </select>
                             </div>
                             <div class="col-lg-4">
@@ -2151,6 +2156,7 @@
                     <div class="ss-card ss-card-pad">
                         <div class="ss-rail-title">Quick links</div>
                         <div class="ss-link-list">
+                            <a href="{{ url_for('main.analytics') }}"><i class="fa-solid fa-chart-pie"></i> Detailed Analytics</a>
                             <a href="{{ url_for('main.privacy_policy') }}"><i class="fa-solid fa-shield-halved"></i> Privacy Policy</a>
                             <a href="{{ url_for('main.terms_and_conditions') }}"><i class="fa-solid fa-file-contract"></i> Terms</a>
                             <a href="mailto:siddhesh.jabalpur49697@gmail.com"><i class="fa-solid fa-envelope"></i> Contact</a>
@@ -2173,7 +2179,8 @@
                             </div>
                         </div>
                         <div class="ss-topbar-right">
-                            <input type="search" class="ss-search" placeholder="Search anything" aria-label="Search dashboard">
+                            <input type="search" id="dashboardSearchInput" class="ss-search" placeholder="Search meals, exercises, or ask AI..." aria-label="Search dashboard">
+                            <a href="{{ url_for('main.analytics') }}" class="btn saathi-btn saathi-btn-ghost"><i class="fa-solid fa-chart-line me-1"></i> Analytics</a>
                             <a href="{{ url_for('auth.logout') }}" class="btn saathi-btn saathi-btn-ghost">Logout</a>
                         </div>
                     </section>
@@ -2266,6 +2273,9 @@
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="feedback-tab" data-bs-toggle="tab" data-bs-target="#feedback-pane" type="button" role="tab">Ratings and feedback</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="coach-tab" data-bs-toggle="tab" data-bs-target="#coach-pane" type="button" role="tab"><i class="fa-solid fa-robot me-1"></i> AI Health Coach</button>
                             </li>
                         </ul>
 
@@ -2360,9 +2370,9 @@
                                             </div>
                                             <div class="ss-progress-bar"><span id="workoutProgressBar"></span></div>
                                             <div class="ss-achievement-row">
-                                                <span class="ss-mini-badge">🔥 7 Day Streak</span>
-                                                <span class="ss-mini-badge">🏆 Consistency Master</span>
-                                                <span class="ss-mini-badge">⚡ Completed On Time</span>
+                                                <span class="ss-mini-badge" id="workoutStreakBadge">🔥 0 Day Streak</span>
+                                                <span class="ss-mini-badge" id="workoutConsistencyBadge">🏆 Building Routine</span>
+                                                <span class="ss-mini-badge" id="workoutStatusBadge">⚡ Ready to Train</span>
                                             </div>
                                         </div>
                                     </div>
@@ -2755,6 +2765,57 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="tab-pane fade" id="coach-pane" role="tabpanel" aria-labelledby="coach-tab" tabindex="0">
+                                <div class="row g-3">
+                                    <div class="col-lg-8">
+                                        <div class="ss-card ss-card-pad d-flex flex-column" style="min-height: 480px;">
+                                            <div class="ss-section-title">
+                                                <div>
+                                                    <p class="ss-rail-title mb-1">RAG + Health Knowledge MCP</p>
+                                                    <h4 class="mb-0">AI Health &amp; Fitness Coach</h4>
+                                                </div>
+                                                <span id="chatbotSourceBadge" class="ss-pill"><i class="fa-solid fa-database me-1"></i> FAISS RAG Ready</span>
+                                            </div>
+                                            <div id="chatbotMessages" class="flex-grow-1 border rounded-4 p-3 mb-3 overflow-auto" style="max-height: 360px; background: var(--page-surface-soft);">
+                                                <div class="p-3 bg-white border rounded-3 mb-2">
+                                                    <strong class="d-block mb-1"><i class="fa-solid fa-robot text-success me-1"></i> Sehat Saathi Coach</strong>
+                                                    <p class="mb-0 small text-secondary">Ask me anything about your metabolic risks, joint-safe exercise substitutions, macro splits, or WHO guidelines!</p>
+                                                </div>
+                                            </div>
+                                            <form id="chatbotForm" class="d-flex gap-2">
+                                                <input type="text" id="chatbotInput" class="form-control" placeholder="e.g. What are my metabolic health risks, or what can I substitute for squats?" required>
+                                                <button type="submit" id="chatbotSendBtn" class="btn saathi-btn saathi-btn-primary px-4"><i class="fa-solid fa-paper-plane me-1"></i> Ask</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="ss-card ss-card-pad h-100">
+                                            <div class="ss-rail-title mb-2">Suggested Prompts</div>
+                                            <div class="d-grid gap-2 mb-4">
+                                                <button type="button" class="btn saathi-btn saathi-btn-ghost text-start btn-sm chatbot-quick-prompt" data-prompt="What are my obesity and metabolic health risks?">
+                                                    <i class="fa-solid fa-heart-pulse me-2 text-danger"></i> Check my ML health risks
+                                                </button>
+                                                <button type="button" class="btn saathi-btn saathi-btn-ghost text-start btn-sm chatbot-quick-prompt" data-prompt="How is my workout modified for my injuries and safety?">
+                                                    <i class="fa-solid fa-shield-heart me-2 text-success"></i> Review injury safety overrides
+                                                </button>
+                                                <button type="button" class="btn saathi-btn saathi-btn-ghost text-start btn-sm chatbot-quick-prompt" data-prompt="Explain my daily macro split and diet recommendations.">
+                                                    <i class="fa-solid fa-bowl-rice me-2 text-warning"></i> Explain my diet &amp; macro split
+                                                </button>
+                                                <button type="button" class="btn saathi-btn saathi-btn-ghost text-start btn-sm chatbot-quick-prompt" data-prompt="What are the WHO physical activity and hydration guidelines?">
+                                                    <i class="fa-solid fa-book-medical me-2 text-primary"></i> WHO exercise &amp; hydration standards
+                                                </button>
+                                            </div>
+                                            <div class="ss-rail-title mb-2">ML Risk Assessment</div>
+                                            <div id="coachRiskBadges" class="d-grid gap-2">
+                                                <div class="ss-rail-chip"><span>Obesity Risk</span><strong id="dispObesityRisk">--</strong></div>
+                                                <div class="ss-rail-chip"><span>Sedentary Risk</span><strong id="dispSedentaryRisk">--</strong></div>
+                                                <div class="ss-rail-chip"><span>Metabolic Risk</span><strong id="dispMetabolicRisk">--</strong></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </section>
                 </main>
@@ -2779,12 +2840,26 @@
                                 <span>Diet</span>
                                 <strong id="railDiet">--</strong>
                             </div>
+                            <div class="ss-rail-chip">
+                                <span>ML Plan Score</span>
+                                <strong id="railPlanScore">--</strong>
+                            </div>
                         </div>
                     </div>
 
                     <div class="ss-card ss-card-pad">
-                        <div class="ss-rail-title">Use notes</div>
-                        <p class="ss-muted mb-0">Track your plan, log daily metrics, and review recommendations from a clean, calm workspace.</p>
+                        <div class="ss-rail-title">Weather &amp; Hydration MCP</div>
+                        <div class="ss-rail-list mb-2">
+                            <div class="ss-rail-chip">
+                                <span>Ambient Weather</span>
+                                <strong id="railWeatherTemp">--</strong>
+                            </div>
+                            <div class="ss-rail-chip">
+                                <span>Hydration Target</span>
+                                <strong id="railHydrationTarget">--</strong>
+                            </div>
+                        </div>
+                        <p class="ss-muted small mb-0" id="railWeatherNote">Weather &amp; Hydration MCP dynamically adjusts outdoor cardio and daily water targets.</p>
                     </div>
                 </aside>
             </div>

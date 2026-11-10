@@ -38,16 +38,21 @@ def create_app(config_class=Config):
     # Import models to register them with SQLAlchemy before create_all
     import database.models
 
-    # Create all DB tables on first run
+    # Create all DB tables and ensure FAISS RAG index on first run
     with app.app_context():
         db.create_all()
+        try:
+            from backend.mcp.rag import ensure_faiss_index
+            ensure_faiss_index()
+        except Exception as exc:
+            app.logger.warning(f"FAISS index initialization skipped: {exc}")
 
     # User Loader
     from database.models import User
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
 
     # Register Blueprints
     from backend.auth.routes import auth_bp

@@ -172,6 +172,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${sign} ${Math.abs(delta).toFixed(1)} ${unit}`;
     }
 
+    function getRangeLabel(range) {
+        if (range === 'month') return 'Last 30 Days';
+        if (range === 'year') return 'Last 365 Days';
+        return 'Last 7 Days';
+    }
+
+    function formatDayLabel(dateValue) {
+        const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+        if (Number.isNaN(date.getTime())) return String(dateValue || '');
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
     function animateCountTo(element, targetValue, suffix = '', decimals = 0, duration = 650) {
         if (!element) return;
         const finalValue = Number(targetValue);
@@ -498,15 +510,17 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     const foodEmojiMap = [
-        [/oat|oats/i, '🥣'],
+        [/oat|oats|quinoa/i, '🥣'],
         [/egg/i, '🥚'],
-        [/almond|nut|nuts/i, '🥜'],
-        [/rice/i, '🍚'],
-        [/spinach|greens|salad/i, '🥬'],
+        [/almond|walnut|nut|nuts|seed/i, '🥜'],
+        [/rice|roti/i, '🍚'],
+        [/spinach|greens|salad|palak/i, '🥬'],
         [/avocado/i, '🥑'],
-        [/tofu/i, '🟩'],
-        [/tempeh/i, '🌿'],
-        [/asparagus|broccoli|beans/i, '🥦'],
+        [/tofu|paneer|yogurt|milk|whey/i, '🧀'],
+        [/tempeh|lentil|dal|chickpea|chana/i, '🍲'],
+        [/chicken|salmon/i, '🍗'],
+        [/banana|apple/i, '🍎'],
+        [/asparagus|broccoli|beans|potato/i, '🥦'],
         [/peanut butter|butter/i, '🧈']
     ];
 
@@ -519,22 +533,68 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    function getWorkoutMeta(day) {
-        return workoutMeta[day] || workoutMeta.Monday;
+    function getWorkoutMeta(day, dayExercises = []) {
+        const base = workoutMeta[day] || workoutMeta.Monday;
+        const activeEx = (Array.isArray(dayExercises) ? dayExercises : []).filter(e => e.name !== 'Rest & Recovery');
+        if (activeEx.length === 0) {
+            return {
+                focus: 'Rest & Recovery',
+                duration: 20,
+                calories: 0,
+                difficulty: 'Beginner',
+                muscles: 'Full Body Recovery • Mobility'
+            };
+        }
+        const muscleSet = new Set();
+        const categories = new Set();
+        activeEx.forEach(ex => {
+            if (ex.primary) muscleSet.add(ex.primary);
+            else if (ex.muscle_group) muscleSet.add(ex.muscle_group.split(',')[0].trim());
+            if (ex.category) categories.add(ex.category);
+        });
+        const dynamicMuscles = Array.from(muscleSet).slice(0, 3).join(' • ') || base.muscles;
+        const focusLabel = categories.has('Cardio') && categories.has('Strength')
+            ? 'Hybrid Strength & Conditioning'
+            : categories.has('Cardio')
+                ? 'Cardio & Endurance'
+                : categories.has('Mobility') && categories.size === 1
+                    ? 'Mobility & Active Recovery'
+                    : base.focus;
+        const cals = activeEx.reduce((s, e) => s + (Number(e.calories_burned) || 0), 0) || base.calories;
+        return {
+            focus: focusLabel,
+            duration: Math.max(20, activeEx.length * 12),
+            calories: cals,
+            difficulty: activeEx[0]?.difficulty || base.difficulty,
+            muscles: dynamicMuscles
+        };
     }
 
-    function getWorkoutExerciseMeta(name) {
-        return workoutExerciseMeta.find((item) => item.test.test(name)) || {
-            icon: '🏋️',
-            muscles: 'Full Body',
-            difficulty: 'Intermediate',
-            tip: 'Move with control and keep each repetition consistent.',
-            instructions: 'Keep good posture, control the movement, and breathe steadily.',
-            mistakes: 'Avoid rushing the reps or losing tension.',
-            primary: 'Primary muscles',
-            secondary: 'Supporting muscles',
-            equipment: 'Bodyweight or standard gym equipment',
-            alternatives: ['Machine variation', 'Dumbbell variation', 'Resistance band variation']
+    function getWorkoutExerciseMeta(name, exerciseObj = {}) {
+        const matched = workoutExerciseMeta.find((item) => item.test.test(name)) || {};
+        const iconMap = [
+            [/squat|leg press|deadlift/i, '🏋️'],
+            [/pushup|bench|press|curl|tricep/i, '💪'],
+            [/plank|yoga|stretch|bird-dog/i, '🧘'],
+            [/row|pull-up/i, '🚣'],
+            [/run|walk|hiit/i, '🏃'],
+            [/swim/i, '🏊'],
+            [/cycl/i, '🚴']
+        ];
+        const iconMatch = iconMap.find(([regex]) => regex.test(name));
+        return {
+            icon: matched.icon || (iconMatch ? iconMatch[1] : '🏋️'),
+            muscles: exerciseObj.muscle_group || matched.muscles || 'Full Body',
+            difficulty: exerciseObj.difficulty || matched.difficulty || 'Intermediate',
+            tip: exerciseObj.tip || matched.tip || 'Move with control and keep each repetition consistent.',
+            instructions: exerciseObj.instructions || matched.instructions || 'Keep good posture, control the movement, and breathe steadily.',
+            mistakes: exerciseObj.mistakes || matched.mistakes || 'Avoid rushing the reps or losing tension.',
+            primary: exerciseObj.primary || matched.primary || 'Primary muscles',
+            secondary: exerciseObj.secondary || matched.secondary || 'Supporting muscles',
+            equipment: exerciseObj.equipment || matched.equipment || 'Bodyweight or standard gym equipment',
+            alternatives: (Array.isArray(exerciseObj.alternatives) && exerciseObj.alternatives.length > 0)
+                ? exerciseObj.alternatives
+                : (matched.alternatives || ['Machine variation', 'Dumbbell variation', 'Resistance band variation'])
         };
     }
 
@@ -543,14 +603,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return match ? match[1] : '🥗';
     }
 
-    function buildSubstitutions(foodName, substitutions) {
+    function buildSubstitutions(foodItem, substitutions) {
+        const foodName = typeof foodItem === 'object' ? (foodItem.name || '') : String(foodItem || '');
+        if (typeof foodItem === 'object' && Array.isArray(foodItem.substitutions) && foodItem.substitutions.length > 0) {
+            return `${foodName} → ${foodItem.substitutions.slice(0, 2).join(' or ')}`;
+        }
         const primary = substitutions[foodName];
         if (primary) return `${foodName} → ${primary}`;
 
         const simple = foodName.replace(/\s*\([^)]*\)/g, '').trim();
         if (substitutions[simple]) return `${simple} → ${substitutions[simple]}`;
 
-        return `${simple || foodName} → Mixed vegetables`;
+        return `${simple || foodName} → Mixed seasonal vegetables / Paneer / Tofu`;
     }
 
     function estimateFiber(meal) {
@@ -661,6 +725,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const railWeight = dashboardGet('railWeight');
         const railHeight = dashboardGet('railHeight');
         const railDiet = dashboardGet('railDiet');
+        const railPlanScore = dashboardGet('railPlanScore');
+        const railWeatherTemp = dashboardGet('railWeatherTemp');
+        const railHydrationTarget = dashboardGet('railHydrationTarget');
+        const railWeatherNote = dashboardGet('railWeatherNote');
 
         if (sidebarProfileName) sidebarProfileName.textContent = u.name;
         if (sidebarGoal) sidebarGoal.textContent = u.fitness_goal;
@@ -668,6 +736,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (railWeight) railWeight.textContent = `${u.weight} kg`;
         if (railHeight) railHeight.textContent = `${u.height} cm`;
         if (railDiet) railDiet.textContent = u.diet_preference;
+        if (railPlanScore) railPlanScore.textContent = g.recommendation_score ? `${g.recommendation_score} / 100` : `${g.confidence_score} / 100`;
+        if (railWeatherTemp && g.weather_context) {
+            railWeatherTemp.textContent = `${g.weather_context.temperature_c}°C (${g.weather_context.condition})`;
+        }
+        if (railHydrationTarget) {
+            railHydrationTarget.textContent = `${u.hydration_target_l || u.water_intake} L/day`;
+        }
+        if (railWeatherNote && g.weather_context) {
+            railWeatherNote.textContent = g.weather_context.recommendation || '';
+        }
+
+        // Coach tab ML Risk Badges
+        const dispObesityRisk = dashboardGet('dispObesityRisk');
+        const dispSedentaryRisk = dashboardGet('dispSedentaryRisk');
+        const dispMetabolicRisk = dashboardGet('dispMetabolicRisk');
+        const riskDict = g.predicted_risks || {};
+        const formatRiskClass = (lvl) => lvl === 'High' ? 'badge bg-danger-subtle text-danger' : lvl === 'Moderate' ? 'badge bg-warning-subtle text-warning' : 'badge bg-success-subtle text-success';
+        if (dispObesityRisk) {
+            const r = riskDict.obesity_risk || 'Low';
+            dispObesityRisk.textContent = r;
+            dispObesityRisk.className = formatRiskClass(r);
+        }
+        if (dispSedentaryRisk) {
+            const r = riskDict.sedentary_risk || 'Low';
+            dispSedentaryRisk.textContent = r;
+            dispSedentaryRisk.className = formatRiskClass(r);
+        }
+        if (dispMetabolicRisk) {
+            const r = riskDict.metabolic_risk || 'Low';
+            dispMetabolicRisk.textContent = r;
+            dispMetabolicRisk.className = formatRiskClass(r);
+        }
 
         // Metric badge
         dashboardGet('dispBMI').textContent = g.bmi;
@@ -746,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }).join('');
 
-            const substitutions = (meal.food_items || []).map(food => buildSubstitutions(food.name || '', meta.substitutions)).slice(0, 3);
+            const substitutions = (meal.food_items || []).map(food => buildSubstitutions(food, meta.substitutions)).slice(0, 3);
 
             col.innerHTML = `
                 <article class="ss-meal-card stagger-item w-100" data-meal="${meal.meal_type}">
@@ -825,6 +925,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         animateReveal(mealsList.querySelectorAll('.stagger-item'), 75);
 
+        currentProfileSnapshot = { user: u, goals: g, diet, workout: data.workout };
+
         // Set up default day (Monday)
         renderWorkoutSchedule(data.workout, "Monday");
         
@@ -835,7 +937,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboardGet('logCalConsumed').value = Math.round(g.target_calories);
         dashboardGet('logCalBurned').value = 0;
         dashboardGet('logDate').value = new Date().toISOString().split('T')[0];
-        currentProfileSnapshot = { user: u, goals: g, diet };
     }
 
     const progressRangeToggle = dashboardGet('progressRangeToggle');
@@ -855,13 +956,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const workoutWeekNav = dashboardGet('workoutWeekNav');
     if (workoutWeekNav) {
         workoutWeekNav.addEventListener('click', (e) => {
-            if (e.target.classList.contains('btn') && activeProfileId) {
-                workoutWeekNav.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
-                e.target.classList.add('active');
-                const day = e.target.getAttribute('data-day');
+            const btn = e.target.closest('.btn[data-day]');
+            if (btn && activeProfileId) {
+                workoutWeekNav.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const day = btn.getAttribute('data-day');
                 fetch(`/api/profile/${activeProfileId}`)
                     .then(res => res.json())
                     .then(data => {
+                        if (currentProfileSnapshot) currentProfileSnapshot.workout = data.workout;
                         renderWorkoutSchedule(data.workout, day);
                     });
             }
@@ -869,7 +972,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderWorkoutSchedule(workoutData, day) {
-        const meta = getWorkoutMeta(day);
+        const dayExercises = Array.isArray(workoutData?.[day]) ? workoutData[day] : [];
+        const meta = getWorkoutMeta(day, dayExercises);
         const list = dashboardGet('exerciseCardsList');
         const safeText = (value) => String(value ?? '')
             .replace(/&/g, '&amp;')
@@ -878,12 +982,11 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
 
-        const dayExercises = Array.isArray(workoutData?.[day]) ? workoutData[day] : [];
         const primaryExercises = dayExercises.filter((exercise) => exercise.name !== 'Rest & Recovery');
         const visibleExercises = primaryExercises.length > 0 ? primaryExercises : dayExercises;
         const totalExercises = visibleExercises.length;
         const completedCount = totalExercises > 0
-            ? (visibleExercises.filter((exercise) => exercise.completed === true).length || Math.min(3, totalExercises))
+            ? visibleExercises.filter((exercise) => exercise.completed === true).length
             : 0;
         const completionPct = totalExercises > 0 ? Math.round((completedCount / totalExercises) * 100) : 0;
         const estimatedDuration = meta.duration || Math.max(25, totalExercises * 8);
@@ -894,7 +997,7 @@ document.addEventListener('DOMContentLoaded', () => {
             visibleExercises.reduce((sum, exercise) => {
                 const sets = Number(exercise.sets) || 3;
                 const reps = parseRepValue(exercise.reps);
-                const exerciseInfo = getWorkoutExerciseMeta(exercise.name || '');
+                const exerciseInfo = getWorkoutExerciseMeta(exercise.name || '', exercise);
                 const intensity = exerciseInfo.difficulty === 'Advanced' ? 72 : exerciseInfo.difficulty === 'Beginner' ? 45 : 58;
                 return sum + (sets * reps * intensity);
             }, 0) || (totalExercises * estimatedDuration * 38)
@@ -914,6 +1017,15 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboardGet('workoutSummaryVolume').textContent = `${summaryVolume.toLocaleString()} kg`;
         dashboardGet('workoutSummaryCompletion').textContent = `${completionPct}%`;
         dashboardGet('workoutCompletionRingValue').textContent = `${completionPct}%`;
+
+        const workoutStatusBadge = dashboardGet('workoutStatusBadge');
+        if (workoutStatusBadge) {
+            workoutStatusBadge.innerHTML = completionPct === 100
+                ? '<i class="fa-solid fa-trophy"></i> Session Complete'
+                : completionPct > 0
+                    ? `<i class="fa-solid fa-bolt"></i> In Progress (${completionPct}%)`
+                    : '<i class="fa-solid fa-circle-check"></i> On Track';
+        }
 
         const dayBadges = dashboardGet('workoutWeekNav')?.querySelectorAll('.btn') || [];
         dayBadges.forEach((btn) => {
@@ -943,7 +1055,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         list.innerHTML = visibleExercises.map((exercise, index) => {
-            const info = getWorkoutExerciseMeta(exercise.name || '');
+            const realIndex = dayExercises.indexOf(exercise);
+            const info = getWorkoutExerciseMeta(exercise.name || '', exercise);
             const difficultyClass = getDifficultyClass(info.difficulty);
             const sets = Number(exercise.sets) || 3;
             const reps = exercise.reps || '10-12';
@@ -954,6 +1067,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const alternateList = Array.isArray(info.alternatives) && info.alternatives.length > 0
                 ? info.alternatives.join(' • ')
                 : 'Bodyweight variation • Machine variation • Dumbbell variation';
+            const cautionBanner = exercise.caution
+                ? `<div class="alert alert-warning py-1.5 px-2.5 small mb-2 mt-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> ${safeText(exercise.caution)}</div>`
+                : '';
 
             return `
                 <article class="ss-exercise-card stagger-item" ${index === 0 ? 'data-expanded="true"' : ''}>
@@ -965,6 +1081,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <span class="ss-difficulty-badge ${difficultyClass}">${safeText(info.difficulty)}</span>
                     </div>
+                    ${cautionBanner}
 
                     <div class="ss-chip-row" aria-label="Workout metrics">
                         <span class="ss-exercise-chip">${sets} Sets</span>
@@ -973,9 +1090,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="ss-exercise-chip">${calories} kcal</span>
                     </div>
 
-                    <div class="ss-chip-row">
+                    <div class="ss-chip-row d-flex justify-content-between align-items-center">
                         <span class="ss-exercise-chip">${safeText(targetMuscles)}</span>
-                        <span class="ss-exercise-chip">${completed ? 'Completed' : 'Queued'}</span>
+                        <button type="button" class="btn btn-sm ${completed ? 'btn-success' : 'btn-outline-success'} rounded-pill toggle-exercise-btn" data-day="${safeText(day)}" data-index="${realIndex >= 0 ? realIndex : index}" data-completed="${completed ? 'true' : 'false'}">
+                            <i class="fa-solid ${completed ? 'fa-circle-check' : 'fa-circle'} me-1"></i> ${completed ? 'Completed' : 'Mark Complete'}
+                        </button>
                     </div>
 
                     <details class="ss-exercise-details" ${index === 0 ? 'open' : ''}>
@@ -1013,6 +1132,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
 
         animateReveal(list.querySelectorAll('.stagger-item'), 70);
+    }
+
+    // Delegated listener for Exercise Completion Toggle
+    const exerciseCardsList = dashboardGet('exerciseCardsList');
+    if (exerciseCardsList) {
+        exerciseCardsList.addEventListener('click', (e) => {
+            const btn = e.target.closest('.toggle-exercise-btn');
+            if (!btn || !activeProfileId) return;
+            const day = btn.getAttribute('data-day');
+            const exerciseIndex = parseInt(btn.getAttribute('data-index'), 10);
+            const currentlyCompleted = btn.getAttribute('data-completed') === 'true';
+
+            fetch('/api/workout/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    profile_id: activeProfileId,
+                    day: day,
+                    exercise_index: exerciseIndex,
+                    completed: !currentlyCompleted
+                })
+            })
+            .then(res => res.json())
+            .then(resData => {
+                if (resData.workout) {
+                    if (currentProfileSnapshot) currentProfileSnapshot.workout = resData.workout;
+                    renderWorkoutSchedule(resData.workout, day);
+                    showToast(!currentlyCompleted ? "Exercise marked completed!" : "Exercise marked queued.");
+                }
+            })
+            .catch(err => console.error("Error toggling exercise:", err));
+        });
     }
 
     // ----------------------------------------------------
@@ -1108,12 +1259,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let latestProgressAnalysis = null;
+    let latestProgressPredictions = null;
+
     function loadProgressLogs(profileId) {
-        fetch(`/api/progress/${profileId}`)
-            .then(res => res.json())
-            .then(history => {
-                renderProgressDashboard(history);
-            });
+        Promise.all([
+            fetch(`/api/progress/${profileId}`).then(res => res.json()),
+            fetch(`/api/progress/analyze/${profileId}`).then(res => res.json()).catch(() => null),
+            fetch(`/api/progress/predict/${profileId}`).then(res => res.json()).catch(() => null)
+        ]).then(([history, analysis, mlPredict]) => {
+            latestProgressAnalysis = analysis;
+            latestProgressPredictions = mlPredict?.predictions || null;
+            renderProgressDashboard(history);
+        });
     }
 
     function renderProgressDashboard(history) {
@@ -1135,11 +1293,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const latest = getLatestEntry(filtered) || getLatestEntry(normalized) || chartHistory[0];
         const first = filtered[0] || normalized[0] || latest;
         const targetCalories = toNumber(goals.target_calories, toNumber(user.weight, 2000));
-        const targetWater = Math.max(1, toNumber(user.water_intake, 8));
+        const targetWater = Math.max(1, toNumber(user.hydration_target_l || user.water_intake, 3));
         const targetSleep = Math.max(1, toNumber(user.sleep_hours, 8));
         const currentWeight = toNumber(latest?.weight, toNumber(user.weight, 0));
         const startWeight = toNumber(first?.weight, currentWeight);
-        const goalWeight = determineGoalWeight(user, currentWeight);
+        const goalWeight = latestProgressPredictions && latestProgressPredictions['90_days']
+            ? toNumber(latestProgressPredictions['90_days'], determineGoalWeight(user, currentWeight))
+            : determineGoalWeight(user, currentWeight);
         const latestWater = toNumber(latest?.water_intake, targetWater);
         const latestSleep = toNumber(latest?.sleep_hours, targetSleep);
         const latestConsumed = toNumber(latest?.calories_consumed, targetCalories);
@@ -1150,6 +1310,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const balancePct = clampValue(100 - (Math.abs(calorieBalance - targetCalories) / Math.max(targetCalories, 1) * 100), 0, 100);
         const loggingStreak = calculateLoggingStreak(normalized);
         const workoutDays = normalized.filter((entry) => toNumber(entry.calories_burned, 0) > 0).length;
+
+        const workoutStreakBadge = dashboardGet('workoutStreakBadge');
+        const workoutConsistencyBadge = dashboardGet('workoutConsistencyBadge');
+        if (workoutStreakBadge) {
+            workoutStreakBadge.innerHTML = `<i class="fa-solid fa-fire"></i> ${loggingStreak}-Day Streak`;
+        }
+        if (workoutConsistencyBadge) {
+            const consistencyLabel = loggingStreak >= 5 ? 'High Consistency' : loggingStreak >= 2 ? 'Building Momentum' : 'Start Logging';
+            workoutConsistencyBadge.innerHTML = `<i class="fa-solid fa-bolt"></i> ${consistencyLabel}`;
+        }
+
         const averageWater = normalized.length ? normalized.reduce((sum, entry) => sum + toNumber(entry.water_intake, 0), 0) / normalized.length : latestWater;
         const averageSleep = normalized.length ? normalized.reduce((sum, entry) => sum + toNumber(entry.sleep_hours, 0), 0) / normalized.length : latestSleep;
         const waterGoalProgress = clampValue((averageWater / targetWater) * 100, 0, 100);
@@ -1170,7 +1341,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const sleepScore = clampValue(sleepPct, 0, 100);
         const healthScore = Math.round((nutritionScore + fitnessScore + sleepScore + hydrationScore) / 4);
         const healthLabel = getProgressScoreLabel(healthScore);
-        const selectedRangeLabel = getProgressScoreLabel(healthScore);
         const progressWindowLabel = getRangeLabel(progressRange);
         const weightDelta = currentWeight - startWeight;
         const weekLabel = progressRange === 'year' ? 'year' : progressRange === 'month' ? 'month' : 'week';
@@ -1233,7 +1403,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         dashboardGet('milestoneStart').innerHTML = `<i class="fa-solid fa-seedling"></i> Start ${startWeight.toFixed(1).replace(/\.0$/, '')} kg`;
         dashboardGet('milestoneCurrent').innerHTML = `<i class="fa-solid fa-location-dot"></i> Current ${currentWeight.toFixed(1).replace(/\.0$/, '')} kg`;
-        dashboardGet('milestoneGoal').innerHTML = `<i class="fa-solid fa-flag-checkered"></i> Goal ${goalWeight.toFixed(1).replace(/\.0$/, '')} kg`;
+        dashboardGet('milestoneGoal').innerHTML = `<i class="fa-solid fa-flag-checkered"></i> 90d ML Target ${goalWeight.toFixed(1).replace(/\.0$/, '')} kg`;
 
         const weightSparkline = dashboardGet('progressSparklineWeight');
         const waterSparkline = dashboardGet('progressSparklineWater');
@@ -1244,23 +1414,29 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSparkline(sleepSparkline, filtered.map((entry) => entry.sleep_hours), chartPalette.accent, chartPalette.mutedFill);
         renderSparkline(caloriesSparkline, filtered.map((entry) => entry.calories_consumed), chartPalette.warning, 'rgba(245, 158, 11, 0.12)');
 
+        const mcpVelocity = latestProgressAnalysis && latestProgressAnalysis.weekly_velocity_kg !== undefined
+            ? `Weekly velocity: ${latestProgressAnalysis.weekly_velocity_kg > 0 ? '+' : ''}${latestProgressAnalysis.weekly_velocity_kg} kg/wk.`
+            : '';
+        const mlForecastText = latestProgressPredictions
+            ? `ML Forecast: ${latestProgressPredictions['7_days']} kg (7d), ${latestProgressPredictions['30_days']} kg (30d), ${latestProgressPredictions['90_days']} kg (90d).`
+            : '';
         const insightWeight = weightDelta < 0
-            ? `You lost ${Math.abs(weightDelta).toFixed(1).replace(/\.0$/, '')} kg over the selected period while staying consistent with your plan.`
+            ? `You lost ${Math.abs(weightDelta).toFixed(1).replace(/\.0$/, '')} kg over the selected period. ${mcpVelocity}`
             : weightDelta > 0
-                ? `Your weight is up by ${weightDelta.toFixed(1).replace(/\.0$/, '')} kg. Review calorie balance and training volume.`
-                : 'Your weight is stable across the selected period.';
-        const insightRecommendation = waterPct < 80
+                ? `Your weight changed by +${weightDelta.toFixed(1).replace(/\.0$/, '')} kg. ${mcpVelocity}`
+                : `Your weight is stable across the selected period. ${mcpVelocity}`;
+        const insightRecommendation = mlForecastText || (waterPct < 80
             ? `Increase water intake by ${Math.max(1, Math.ceil(targetWater - latestWater)).toFixed(0)} L/day to improve recovery and energy.`
-            : sleepPct < 90
-                ? 'Protect your sleep window by 20 to 30 minutes each night to support recovery.'
-                : 'Keep protein and recovery habits consistent to preserve momentum.';
-        const warningText = (waterPct < 70 || sleepPct < 75 || Math.abs(calorieBalance - targetCalories) > 300)
-            ? `Water or recovery dipped below target in the selected period. Review the flagged metrics before the next week.`
-            : 'No major warnings detected in the selected period.';
+            : 'Keep protein and recovery habits consistent to preserve momentum.');
+        const mcpAlerts = Array.isArray(latestProgressAnalysis?.alerts) && latestProgressAnalysis.alerts.length > 0
+            ? latestProgressAnalysis.alerts.join(' ')
+            : ((waterPct < 70 || sleepPct < 75 || Math.abs(calorieBalance - targetCalories) > 300)
+                ? `Water or recovery dipped below target in the selected period. Review the flagged metrics.`
+                : 'Progress MCP Audit: All compliance and safety metrics within healthy bounds.');
 
         dashboardGet('progressInsightPrimary').textContent = insightWeight;
         dashboardGet('progressInsightSecondary').textContent = insightRecommendation;
-        dashboardGet('progressInsightWarning').textContent = warningText;
+        dashboardGet('progressInsightWarning').textContent = mcpAlerts;
 
         const activityTimeline = dashboardGet('activityTimeline');
         if (activityTimeline) {
@@ -1305,7 +1481,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const waters = history.map((entry) => toNumber(entry.water_intake, 0));
         const sleeps = history.map((entry) => toNumber(entry.sleep_hours, 0));
         const profile = currentProfileSnapshot || {};
-        const targetWeight = determineGoalWeight(profile.user || {}, toNumber(weights[weights.length - 1], 0));
+        const fallbackTarget = determineGoalWeight(profile.user || {}, toNumber(weights[weights.length - 1], 0));
+        const targetWeight = latestProgressPredictions && latestProgressPredictions['90_days']
+            ? toNumber(latestProgressPredictions['90_days'], fallbackTarget)
+            : fallbackTarget;
         const goalLine = dates.map(() => targetWeight);
         const projectedLine = dates.length > 1
             ? dates.map((_, index) => weights[0] + (((targetWeight - weights[0]) / (dates.length - 1)) * index))
@@ -1561,6 +1740,90 @@ document.addEventListener('DOMContentLoaded', () => {
                 animateReveal(timeline.querySelectorAll('.stagger-item'), 60);
             })
             .catch(err => console.error("Error loading reviews:", err));
+    }
+
+    // ----------------------------------------------------
+    // AI Health Coach Chatbot (RAG + MCP)
+    // ----------------------------------------------------
+    const chatbotForm = dashboardGet('chatbotForm');
+    const chatbotInput = dashboardGet('chatbotInput');
+    const chatbotMessages = dashboardGet('chatbotMessages');
+
+    function appendChatMessage(role, text, sourceTag = '') {
+        if (!chatbotMessages) return;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'p-3 rounded-3 border';
+        if (role === 'user') {
+            wrapper.style.background = '#ecfdf5';
+            wrapper.style.borderColor = '#a7f3d0';
+            wrapper.style.alignSelf = 'flex-end';
+            wrapper.style.maxWidth = '85%';
+            wrapper.innerHTML = `<div class="fw-bold small text-success mb-1"><i class="fa-solid fa-user me-1"></i> You</div><p class="mb-0 small text-dark"></p>`;
+            wrapper.querySelector('p').textContent = text;
+        } else {
+            wrapper.style.background = '#ffffff';
+            wrapper.style.borderColor = '#e2e8f0';
+            wrapper.style.maxWidth = '92%';
+            const srcBadge = sourceTag ? `<span class="badge bg-light text-secondary border ms-2">${sourceTag}</span>` : '';
+            wrapper.innerHTML = `<div class="fw-bold small text-success mb-1"><i class="fa-solid fa-robot me-1"></i> Sehat Saathi Coach ${srcBadge}</div><p class="mb-0 small text-secondary" style="white-space: pre-line;"></p>`;
+            wrapper.querySelector('p').textContent = text;
+        }
+        chatbotMessages.appendChild(wrapper);
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }
+
+    function sendChatbotMessage(messageText) {
+        if (!messageText || !messageText.trim()) return;
+        appendChatMessage('user', messageText.trim());
+        if (chatbotInput) chatbotInput.value = '';
+
+        fetch('/api/chatbot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                profile_id: activeProfileId,
+                message: messageText.trim()
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            appendChatMessage('bot', data.reply || 'Unable to generate response right now.', data.source || 'RAG MCP');
+        })
+        .catch(err => {
+            appendChatMessage('bot', 'Error connecting to AI Health Coach: ' + err.message, 'Error');
+        });
+    }
+
+    if (chatbotForm) {
+        chatbotForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendChatbotMessage(chatbotInput?.value || '');
+        });
+    }
+
+    document.querySelectorAll('.chatbot-quick-prompt').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const prompt = btn.getAttribute('data-prompt');
+            if (prompt) sendChatbotMessage(prompt);
+        });
+    });
+
+    // ----------------------------------------------------
+    // Dashboard Search Filter
+    // ----------------------------------------------------
+    const dashboardSearchInput = dashboardGet('dashboardSearchInput');
+    if (dashboardSearchInput) {
+        dashboardSearchInput.addEventListener('input', (e) => {
+            const query = (e.target.value || '').trim().toLowerCase();
+            document.querySelectorAll('#mealsList .ss-meal-card').forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.parentElement.style.display = (!query || text.includes(query)) ? '' : 'none';
+            });
+            document.querySelectorAll('#exerciseCardsList .ss-exercise-card').forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = (!query || text.includes(query)) ? '' : 'none';
+            });
+        });
     }
 
     // ----------------------------------------------------

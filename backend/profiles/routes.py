@@ -10,7 +10,7 @@ from flask_login import login_required, current_user
 from database.db import db
 from database.models import (
     Profile, FitnessGoals, WorkoutPlans, DietPlans,
-    Recommendations, HydrationRecords, WeatherHistory, Feedback
+    Recommendations, HydrationRecords, WeatherHistory, Feedback, MCPLogs
 )
 
 # Import ML predictors
@@ -264,8 +264,9 @@ def create_profile():
             "experience": experience, "medical": medical, "injuries": injuries
         }
         rec_outputs = {
-            "predicted_goal": predicted_goal, "goal_confidence": goal_conf,
-            "predicted_risks": predicted_risks, "diet_knn_suggestion": diet_knn_res
+            "predicted_goal": predicted_goal, "goal_confidence": round(goal_conf, 3),
+            "predicted_risks": predicted_risks, "diet_knn_suggestion": diet_knn_res,
+            "weather_context": weather, "hydration_target_l": hydration_target
         }
         db.session.add(Recommendations(
             profile_id=new_profile.id,
@@ -280,6 +281,22 @@ def create_profile():
             log_date=today_date,
             target_l=hydration_target,
             consumed_l=0.0
+        ))
+
+        # Audit MCP tool invocations in MCPLogs
+        db.session.add(MCPLogs(
+            profile_id=new_profile.id,
+            mcp_name="Weather MCP",
+            tool_name="weather_lookup",
+            input_params=json.dumps({"latitude": 28.61, "longitude": 77.20}),
+            output_data=json.dumps(weather)
+        ))
+        db.session.add(MCPLogs(
+            profile_id=new_profile.id,
+            mcp_name="Hydration MCP",
+            tool_name="hydration_calculate",
+            input_params=json.dumps({"weight_kg": weight, "activity_level": activity, "temperature_c": weather["temperature_c"]}),
+            output_data=json.dumps(hydration_target_res)
         ))
 
         db.session.commit()
@@ -347,6 +364,23 @@ def get_profile_details(profile_id):
     rec_score = ml_rec.score if ml_rec else 85.0
     rec_outputs = json.loads(ml_rec.outputs) if ml_rec else {}
 
+    weather_context = rec_outputs.get("weather_context")
+    if not weather_context:
+        latest_weather = WeatherHistory.query.order_by(WeatherHistory.log_date.desc()).first()
+        if latest_weather:
+            weather_context = {
+                "temperature_c": latest_weather.temp_c,
+                "humidity": latest_weather.humidity,
+                "air_quality": latest_weather.air_quality,
+                "condition": latest_weather.condition,
+                "recommendation": "Outdoor activity approved." if latest_weather.temp_c < 35 else "Extreme heat: prefer indoor workouts."
+            }
+        else:
+            weather_context = fetch_weather_recommendation()
+
+    latest_hydration = HydrationRecords.query.filter_by(profile_id=profile.id).order_by(HydrationRecords.log_date.desc()).first()
+    hydration_target_l = latest_hydration.target_l if latest_hydration else profile.water_intake
+
     return jsonify({
         "user": {
             "id": profile.id,
@@ -359,6 +393,7 @@ def get_profile_details(profile_id):
             "activity_level": profile.activity_level,
             "diet_preference": profile.diet_preference,
             "water_intake": profile.water_intake,
+            "hydration_target_l": hydration_target_l,
             "sleep_hours": profile.sleep_hours,
             "workout_experience": profile.workout_experience,
             "medical_conditions": profile.medical_conditions,
@@ -377,6 +412,10 @@ def get_profile_details(profile_id):
             "confidence_score": g.confidence_score if g else 90,
             "advisory_notes": advisories,
             "recommendation_score": rec_score,
+            "predicted_goal": rec_outputs.get("predicted_goal", profile.fitness_goal),
+            "goal_confidence": rec_outputs.get("goal_confidence", 0.9),
+            "diet_knn_suggestion": rec_outputs.get("diet_knn_suggestion", {}),
+            "weather_context": weather_context,
             "predicted_risks": rec_outputs.get("predicted_risks", {
                 "obesity_risk": "Low Risk",
                 "sedentary_risk": "Low Risk",
@@ -386,6 +425,45 @@ def get_profile_details(profile_id):
         "diet": diet,
         "workout": workout
     }), 200
+
+
+@profiles_bp.route('/workout/toggle', methods=['POST'])
+@login_required
+def toggle_workout_exercise():
+    """Persists completed state of a workout exercise for a given profile and day."""
+    data = request.json or {}
+    profile_id = data.get('profile_id')
+    day = data.get('day')
+    exercise_index = data.get('exercise_index')
+    completed = bool(data.get('completed', False))
+
+    if profile_id is None or not day or exercise_index is None:
+        return jsonify({"error": "Missing profile_id, day, or exercise_index"}), 400
+
+    profile = Profile.query.filter_by(id=int(profile_id), user_id=current_user.id).first()
+    if not profile:
+        return jsonify({"error": "Access denied"}), 403
+
+    wp = WorkoutPlans.query.filter_by(profile_id=profile.id, day_of_week=str(day)).first()
+    if not wp:
+        return jsonify({"error": f"Workout plan for {day} not found"}), 404
+
+    exercises = json.loads(wp.exercises)
+    idx = int(exercise_index)
+    if 0 <= idx < len(exercises):
+        exercises[idx]["completed"] = completed
+        wp.exercises = json.dumps(exercises)
+        db.session.commit()
+        workout_dict = {}
+        for plan in profile.workout_plans:
+            workout_dict[plan.day_of_week] = json.loads(plan.exercises)
+        return jsonify({
+            "message": "Exercise status updated",
+            "exercises": exercises,
+            "workout": workout_dict
+        }), 200
+
+    return jsonify({"error": "Invalid exercise index"}), 400
 
 
 @profiles_bp.route('/feedback', methods=['POST'])

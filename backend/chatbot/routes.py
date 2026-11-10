@@ -2,7 +2,8 @@ import os
 import json
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
-from database.models import Profile
+from database.db import db
+from database.models import Profile, MCPLogs
 from backend.mcp.rag import query_rag_knowledge_base
 from backend.mcp.health_knowledge import lookup_health_standards
 
@@ -85,7 +86,7 @@ def generate_offline_answer(query: str, profile: Profile, rag_results: dict) -> 
 @login_required
 def ask_chatbot():
     data = request.json or {}
-    query = data.get('query', '').strip()
+    query = (data.get('query') or data.get('message') or '').strip()
     profile_id = data.get('profile_id')
     
     if not query:
@@ -98,8 +99,19 @@ def ask_chatbot():
     if not profile:
         return jsonify({"error": "Selected profile not found or access denied."}), 404
         
-    # 1. Retrieve information via RAG MCP
+    # 1. Retrieve information via RAG MCP & Health Knowledge MCP
     rag_results = query_rag_knowledge_base(query, top_k=2)
+    health_standards = lookup_health_standards(query)
+
+    # Audit RAG MCP call
+    db.session.add(MCPLogs(
+        profile_id=profile.id,
+        mcp_name="RAG MCP",
+        tool_name="rag_search",
+        input_params=json.dumps({"query": query, "top_k": 2}),
+        output_data=json.dumps(rag_results)
+    ))
+    db.session.commit()
     
     # 2. Check for LLM API keys in env variables for natural completion
     gemini_key = os.environ.get("GEMINI_API_KEY")
@@ -107,36 +119,69 @@ def ask_chatbot():
     
     if gemini_key:
         try:
-            # We can use Gemini API to write a highly natural answer!
-            # Format context
-            context = json.dumps(rag_results.get("results", []))
+            context = json.dumps({
+                "rag_chunks": rag_results.get("results", []),
+                "health_standards": health_standards
+            })
             prompt = (
-                f"You are a health coach assistant for the Sehat Saathi project. Answer the user question: '{query}'\n"
+                f"You are a clinical-grade health and fitness coach assistant for Sehat Saathi. Answer the user question: '{query}'\n"
                 f"User Profile details:\n"
                 f"- Name: {profile.name}, Goal: {profile.fitness_goal}, Weight: {profile.weight}kg, "
                 f"Injuries: {profile.injuries}, Allergies: {profile.allergies}, Medical: {profile.medical_conditions}\n"
                 f"Target Calories: {profile.goals.target_calories if profile.goals else 2000} kcal.\n\n"
                 f"Use the following retrieved clinical knowledge chunks to support your answer. "
-                f"Provide direct, clinical-grade advice and maintain joint safety rules. Do not mention that you have context chunks:\n"
+                f"Provide direct, actionable advice and maintain joint safety rules. Do not mention that you have context chunks:\n"
                 f"{context}"
             )
             
-            # Simple call to Gemini Developer API
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={gemini_key}"
+            # Call Gemini API using current gemini-2.5-flash model
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
             headers = {"Content-Type": "application/json"}
             payload = {"contents": [{"parts": [{"text": prompt}]}]}
             
             import requests
-            res = requests.post(url, json=payload, headers=headers, timeout=5.0)
+            res = requests.post(url, json=payload, headers=headers, timeout=8.0)
             if res.status_code == 200:
                 answer = res.json()["candidates"][0]["content"]["parts"][0]["text"]
-                return jsonify({"answer": answer, "mcp_source": "RAG MCP + Gemini API"}), 200
+                src = f"RAG MCP ({rag_results.get('search_type')}) + Gemini 2.5 Flash"
+                return jsonify({"answer": answer, "reply": answer, "mcp_source": src, "source": src}), 200
         except Exception as e:
             print(f"Gemini API generation failed: {e}. Falling back to offline engine.")
+
+    if openai_key:
+        try:
+            context = json.dumps(rag_results.get("results", []))
+            prompt = (
+                f"User Profile: {profile.name}, Goal: {profile.fitness_goal}, Weight: {profile.weight}kg, "
+                f"Injuries: {profile.injuries}, Allergies: {profile.allergies}, Medical: {profile.medical_conditions}.\n"
+                f"Clinical Context: {context}\n\nQuestion: {query}"
+            )
+            import requests
+            res = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {openai_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [
+                        {"role": "system", "content": "You are the Sehat Saathi AI Fitness & Nutrition Coach."},
+                        {"role": "user", "content": prompt}
+                    ]
+                },
+                timeout=8.0
+            )
+            if res.status_code == 200:
+                answer = res.json()["choices"][0]["message"]["content"]
+                src = f"RAG MCP ({rag_results.get('search_type')}) + OpenAI API"
+                return jsonify({"answer": answer, "reply": answer, "mcp_source": src, "source": src}), 200
+        except Exception as e:
+            print(f"OpenAI API generation failed: {e}. Falling back to offline engine.")
             
     # Fallback to local rule-based RAG synthesis
     answer = generate_offline_answer(query, profile, rag_results)
+    src = f"RAG MCP ({rag_results.get('search_type', 'FAISS Index')}) + Health Knowledge MCP"
     return jsonify({
-        "answer": answer, 
-        "mcp_source": "RAG MCP (FAISS) + Health Knowledge MCP (Local Expert Engine)"
+        "answer": answer,
+        "reply": answer,
+        "mcp_source": src,
+        "source": src
     }), 200

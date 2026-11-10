@@ -30,13 +30,17 @@ def generate_workout_plan(goal: str, experience: str, injuries: str, medical_con
     med_lower = str(medical_conditions).lower() if medical_conditions else "none"
     goal_lower = str(goal).lower()
     
-    # Base 7-day schedule skeletons by fitness goal
-    schedule_days = {
-        "Monday": [], "Tuesday": [], "Wednesday": [], 
-        "Thursday": [], "Friday": [], "Saturday": [], "Sunday": []
-    }
-    
-    if "loss" in goal_lower or "fat" in goal_lower:
+    if "endurance" in goal_lower:
+        schedule_raw = {
+            "Monday": ["Running", "Plank", "Full Body Stretching"],
+            "Tuesday": ["Squats", "Pushups", "Dumbbell Rows"],
+            "Wednesday": ["Cycling", "Rowing Machine"],
+            "Thursday": ["Yoga Flow", "Bird-Dog & Glute Bridge"],
+            "Friday": ["HIIT Circuit", "Plank"],
+            "Saturday": ["Swimming", "Full Body Stretching"],
+            "Sunday": ["Rest & Recovery"]
+        }
+    elif "loss" in goal_lower or "fat" in goal_lower:
         schedule_raw = {
             "Monday": ["Squats", "Pushups", "Dumbbell Rows", "Plank"],
             "Tuesday": ["HIIT Circuit"],
@@ -94,12 +98,23 @@ def generate_workout_plan(goal: str, experience: str, injuries: str, medical_con
             if name == "Rest & Recovery":
                 day_workouts.append({
                     "name": "Rest & Recovery",
+                    "category": "Recovery",
+                    "muscle_group": "Full Body Recovery",
+                    "primary": "Recovery",
+                    "secondary": "Mobility",
+                    "equipment": "None",
+                    "difficulty": "Beginner",
                     "sets": 0,
                     "reps": "N/A",
                     "rest_time": "N/A",
                     "calories_burned": 0,
                     "description": "Rest day to allow muscle fibers to heal and rebuild.",
-                    "caution": ""
+                    "instructions": "Focus on sleep, hydration, light walking, or gentle stretching.",
+                    "mistakes": "Avoid heavy training on scheduled recovery days.",
+                    "tip": "Muscle hypertrophy and nervous system supercompensation occur during recovery.",
+                    "alternatives": ["Brisk Walking", "Yoga Flow", "Full Body Stretching"],
+                    "caution": "",
+                    "completed": False
                 })
                 continue
                 
@@ -132,7 +147,18 @@ def generate_workout_plan(goal: str, experience: str, injuries: str, medical_con
                     actual_ex = SHOULDER_SUBSTITUTIONS[ex_key].title()
                     caution_msg = f"Substituted {name} to avoid shoulder strain."
                     
-            # Cardiovascular/Asthma safety
+            # Cardiovascular / Hypertension / Asthma safety
+            if "hypertension" in med_lower or "blood pressure" in med_lower:
+                if actual_ex.lower() == "deadlift":
+                    actual_ex = "Dumbbell Rows"
+                    caution_msg = "Heavy Deadlift swapped for Dumbbell Rows to prevent blood pressure spikes (Valsalva)."
+                elif actual_ex.lower() == "overhead press":
+                    actual_ex = "Plank"
+                    caution_msg = "Overhead Press swapped to avoid hypertensive blood pressure elevation."
+                elif actual_ex.lower() == "hiit circuit":
+                    actual_ex = "Cycling"
+                    caution_msg = "HIIT swapped for steady-state Cycling for blood pressure management."
+
             if ("heart" in med_lower or "cardio" in med_lower or "asthma" in med_lower) and actual_ex.lower() == "hiit circuit":
                 actual_ex = "Brisk Walking"
                 caution_msg = "HIIT swapped for steady-state Brisk Walking for cardiorespiratory safety."
@@ -186,12 +212,23 @@ def generate_workout_plan(goal: str, experience: str, injuries: str, medical_con
             
             day_workouts.append({
                 "name": actual_ex,
+                "category": ex_details.get("category", "Strength"),
+                "muscle_group": ex_details.get("muscle_group", "Full Body"),
+                "primary": ex_details.get("primary", "Primary Muscles"),
+                "secondary": ex_details.get("secondary", "Secondary Stabilizers"),
+                "equipment": ex_details.get("equipment", "Standard Equipment"),
+                "difficulty": ex_details.get("difficulty", "Intermediate"),
                 "sets": sets,
                 "reps": reps,
                 "rest_time": rest,
                 "calories_burned": int(cals),
                 "description": ex_details["description"],
-                "caution": caution_msg + (" " + warmup_note if warmup_note else "")
+                "instructions": ex_details.get("instructions", "Maintain controlled form and steady breathing."),
+                "mistakes": ex_details.get("mistakes", "Avoid rushing repetitions or compromising posture."),
+                "tip": ex_details.get("tip", "Focus on mind-muscle connection and progressive overload."),
+                "alternatives": ex_details.get("alternatives", ["Bodyweight variation", "Dumbbell variation"]),
+                "caution": (caution_msg + (" " + warmup_note if warmup_note else "")).strip(),
+                "completed": False
             })
             
         final_schedule[day] = day_workouts
