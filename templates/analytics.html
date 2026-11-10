@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 profiles.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p.id;
-                    opt.textContent = `${p.name} (${p.goal})`;
+                    opt.textContent = `${p.name} (${p.fitness_goal || p.goal || 'Fitness'})`;
                     profileSelect.appendChild(opt);
                 });
                 currentProfileId = profiles[0].id;
@@ -265,13 +265,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const u = profileData.user || {};
             const g = profileData.goals || {};
             const preds = predictData.predictions || {};
+            const rawConf = Number(g.goal_confidence ?? g.confidence_score ?? 90);
+            const confPct = rawConf <= 1 ? Math.round(rawConf * 100) : Math.round(rawConf);
+            const knnPref = (g.diet_knn_suggestion && g.diet_knn_suggestion.suggested_preference)
+                ? g.diet_knn_suggestion.suggested_preference
+                : (typeof g.diet_knn_suggestion === 'string' && g.diet_knn_suggestion ? g.diet_knn_suggestion : u.diet_preference);
 
             document.getElementById('pred7Days').textContent = `${preds['7_days'] ?? u.weight} kg`;
             document.getElementById('pred30Days').textContent = `${preds['30_days'] ?? u.weight} kg`;
             document.getElementById('pred90Days').textContent = `${preds['90_days'] ?? u.weight} kg`;
-            document.getElementById('predGoalBadge').textContent = `ML Goal: ${g.predicted_goal || u.fitness_goal} (${g.goal_confidence || g.confidence_score}%)`;
+            document.getElementById('predGoalBadge').textContent = `ML Goal: ${g.predicted_goal || u.fitness_goal} (${confPct}%)`;
             document.getElementById('predVelocityText').textContent = `Weekly Velocity: ${analysis.weekly_velocity_kg ?? 0} kg/wk`;
-            document.getElementById('predPlanScore').textContent = `Plan Score: ${g.recommendation_score || g.confidence_score}/100 | KNN: ${g.diet_knn_suggestion || u.diet_preference}`;
+            document.getElementById('predPlanScore').textContent = `Plan Score: ${g.recommendation_score || g.confidence_score}/100 | KNN: ${knnPref}`;
             document.getElementById('mcpHydrationTarget').textContent = `${u.hydration_target_l || u.water_intake} L/day`;
             document.getElementById('mcpWeatherSummary').textContent = g.weather_context
                 ? `${g.weather_context.temperature_c}°C • ${g.weather_context.condition}`

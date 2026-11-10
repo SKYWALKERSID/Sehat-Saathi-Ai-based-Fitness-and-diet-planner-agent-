@@ -24,7 +24,17 @@ def fetch_weather_recommendation(latitude: float = 28.61, longitude: float = 77.
             data = res.json()
             curr = data.get("current_weather", {})
             weather_data["temp_c"] = float(curr.get("temperature", 25.0))
-            weather_data["description"] = f"Code: {curr.get('weathercode', 0)}"
+            wmo_code = int(curr.get("weathercode", 0))
+            wmo_map = {
+                0: "Clear Sky", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
+                45: "Foggy", 48: "Depositing Rime Fog",
+                51: "Light Drizzle", 53: "Moderate Drizzle", 55: "Dense Drizzle",
+                61: "Slight Rain", 63: "Moderate Rain", 65: "Heavy Rain",
+                71: "Slight Snow", 73: "Moderate Snow", 75: "Heavy Snow",
+                80: "Rain Showers", 81: "Moderate Showers", 82: "Heavy Showers",
+                95: "Thunderstorm"
+            }
+            weather_data["description"] = wmo_map.get(wmo_code, "Clear & Pleasant")
             weather_data["source"] = "Open-Meteo API"
     except Exception as e:
         print(f"Weather API fetch failed: {e}. Falling back to simulation.")

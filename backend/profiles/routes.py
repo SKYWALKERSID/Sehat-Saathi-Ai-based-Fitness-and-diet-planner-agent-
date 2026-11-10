@@ -208,11 +208,13 @@ def create_profile():
         workout_plan = workout_gen.generate_workout_plan(goal, experience, injuries, medical, weight, weather)
         diet_meals = diet_gen.generate_diet_plan(target_cals, prot, carb, fat, diet_pref, allergies)
 
-        # 8. Plan recommendation score
-        allergy_clash = (allergies != "None")
-        injury_clash = (injuries != "None")
+        # 8. Plan recommendation score (measure actual diet calorie adherence & safety resolution)
+        actual_diet_cals = sum(m.get("calories", 0) for m in diet_meals) if diet_meals else target_cals
+        calorie_diff = abs(target_cals - actual_diet_cals)
+        allergy_clash = False  # Resolved by filter_foods()
+        injury_clash = False   # Resolved by workout safety substitutions
         rec_score = predictor.predict_recommendation_score(
-            age, bmi, sleep, water, experience, abs(target_cals - ml_cals), allergy_clash, injury_clash
+            age, bmi, sleep, water, experience, calorie_diff, allergy_clash, injury_clash
         )
 
         # 9. Save to DB

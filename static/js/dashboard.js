@@ -752,19 +752,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const dispSedentaryRisk = dashboardGet('dispSedentaryRisk');
         const dispMetabolicRisk = dashboardGet('dispMetabolicRisk');
         const riskDict = g.predicted_risks || {};
-        const formatRiskClass = (lvl) => lvl === 'High' ? 'badge bg-danger-subtle text-danger' : lvl === 'Moderate' ? 'badge bg-warning-subtle text-warning' : 'badge bg-success-subtle text-success';
+        const formatRiskClass = (lvl) => String(lvl).toLowerCase().includes('high') ? 'badge bg-danger-subtle text-danger' : String(lvl).toLowerCase().includes('mod') ? 'badge bg-warning-subtle text-warning' : 'badge bg-success-subtle text-success';
         if (dispObesityRisk) {
-            const r = riskDict.obesity_risk || 'Low';
+            const r = riskDict.obesity_risk || 'Low Risk';
             dispObesityRisk.textContent = r;
             dispObesityRisk.className = formatRiskClass(r);
         }
         if (dispSedentaryRisk) {
-            const r = riskDict.sedentary_risk || 'Low';
+            const r = riskDict.sedentary_risk || 'Low Risk';
             dispSedentaryRisk.textContent = r;
             dispSedentaryRisk.className = formatRiskClass(r);
         }
         if (dispMetabolicRisk) {
-            const r = riskDict.metabolic_risk || 'Low';
+            const r = riskDict.metabolic_risk || 'Low Risk';
             dispMetabolicRisk.textContent = r;
             dispMetabolicRisk.className = formatRiskClass(r);
         }

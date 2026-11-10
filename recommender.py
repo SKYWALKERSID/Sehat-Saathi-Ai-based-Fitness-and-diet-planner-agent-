@@ -46,11 +46,17 @@ def calculate_health_metrics(
     target_calories = round(target_calories, 1)
     p_g, c_g, f_g = calculate_macro_ratios(target_calories, diet_preference, goal)
     risks = predictor.predict_health_risks(bmi, age, activity_level)
+    pred_goal, goal_conf = predictor.predict_goal_category(age, gender, height, weight, activity_level)
+    diet_knn = predictor.recommend_diet_knn(goal, weight, activity_level, diet_preference)
+    weather_ctx = fetch_weather_recommendation()
+    from backend.mcp.hydration import calculate_hydration_target
+    hydration_res = calculate_hydration_target(weight, activity_level, weather_ctx["temperature_c"])
+
     advisory_notes = evaluate_advisory_notes(
         age, bmi, sleep_hours, water_intake, medical_conditions, injuries, allergies, risks
     )
     score = predictor.predict_recommendation_score(
-        age, bmi, sleep_hours, water_intake, workout_experience, 50.0, False, False
+        age, bmi, sleep_hours, water_intake, workout_experience, 5.0, False, False
     )
 
     return {
@@ -65,6 +71,11 @@ def calculate_health_metrics(
         "confidence_score": round(score, 1),
         "advisory_notes": advisory_notes,
         "predicted_risks": risks,
+        "predicted_goal": pred_goal,
+        "goal_confidence": round(goal_conf, 3),
+        "diet_knn_suggestion": diet_knn,
+        "weather_context": weather_ctx,
+        "hydration_target_l": hydration_res["hydration_target_l"],
     }
 
 

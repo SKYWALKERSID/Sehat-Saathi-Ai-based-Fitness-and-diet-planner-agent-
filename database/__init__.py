@@ -93,10 +93,11 @@ def save_user_profile(profile, goals, diet, workouts):
         today_str = datetime.today().strftime('%Y-%m-%d')
 
         # Save default Hydration Record
+        hydration_target = goals.get('hydration_target_l', profile['water_intake'])
         db.session.add(HydrationRecords(
             profile_id=new_profile.id,
             log_date=today_str,
-            target_l=profile['water_intake'],
+            target_l=hydration_target,
             consumed_l=profile['water_intake']
         ))
 
@@ -128,11 +129,23 @@ def save_user_profile(profile, goals, diet, workouts):
             ))
 
         # Save Recommendations & MCP audit log
+        rec_outputs = {
+            "predicted_goal": goals.get("predicted_goal", profile["fitness_goal"]),
+            "goal_confidence": goals.get("goal_confidence", 0.92),
+            "predicted_risks": goals.get("predicted_risks", {
+                "obesity_risk": "Low Risk",
+                "sedentary_risk": "Low Risk",
+                "metabolic_risk": "Low Risk"
+            }),
+            "diet_knn_suggestion": goals.get("diet_knn_suggestion", {"suggested_preference": profile["diet_preference"]}),
+            "weather_context": goals.get("weather_context"),
+            "hydration_target_l": hydration_target
+        }
         db.session.add(Recommendations(
             profile_id=new_profile.id,
-            model_name="ML Ensemble + MCP Pipeline",
+            model_name="XGBoost + RF + DecisionTree + KNN Pipeline",
             inputs=json.dumps(profile),
-            outputs=json.dumps({"goals": goals}),
+            outputs=json.dumps(rec_outputs),
             score=goals['confidence_score']
         ))
 

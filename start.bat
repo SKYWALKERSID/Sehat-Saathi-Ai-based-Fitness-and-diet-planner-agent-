@@ -11,12 +11,12 @@ if not exist ".venv\Scripts\python.exe" (
 echo [2/4] Installing / verifying dependencies...
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 
-if not exist "backend\ml_models\fitness_goal_model.pkl" (
+if not exist "backend\ml_models\goal_predictor.pkl" (
     echo [3/4] Training ML models...
     .\.venv\Scripts\python.exe backend\ml_models\train.py
 )
 
-if not exist "database\fitness_planner.db" (
+if not exist "app.db" (
     echo [3.5/4] Populating initial demo database & FAISS RAG index...
     .\.venv\Scripts\python.exe populate_test_cases.py
 )
